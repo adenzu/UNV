@@ -11,21 +11,19 @@ public class TargetController : MonoBehaviour
     private float _timer = 0f;
     private Vector3 _targetPosition;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         _timer = _cooldown;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         _timer -= Time.deltaTime;
 
         if (_timer <= 0f)
         {
             _timer = _cooldown;
-            _targetPosition = Vector3.Scale(new Vector3(1, 0, 1), Random.insideUnitSphere) * _distance + transform.position;
+            _targetPosition = (Vector3)Random.insideUnitCircle * _distance + transform.position;
         }
 
         transform.position = Vector3.MoveTowards(transform.position, _targetPosition, _speed * Time.deltaTime);
