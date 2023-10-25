@@ -23,7 +23,7 @@ public class TargetController : MonoBehaviour
         if (_timer <= 0f)
         {
             _timer = _cooldown;
-            _targetPosition = (Vector3)Random.insideUnitCircle * _distance + transform.position;
+            _targetPosition = Random.insideUnitCircle.XZ() * _distance + transform.position;
         }
 
         transform.position = Vector3.MoveTowards(transform.position, _targetPosition, _speed * Time.deltaTime);
