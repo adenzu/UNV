@@ -12,6 +12,9 @@ public class ShipController : MonoBehaviour
     [SerializeField] private float _power = 5f;
     [SerializeField] private float _maxSpeed = 10f;
 
+    private float _thrust;
+    private float _steer;
+
     private Rigidbody _rigidbody;
 
     private void Start()
@@ -23,6 +26,8 @@ public class ShipController : MonoBehaviour
     {
         PlaceholderAI.Inputs inputs = new PlaceholderAI.Inputs
         {
+            thrust = _thrust,
+            steer = _steer,
             right = transform.right,
             position = transform.position,
             target = _target.position,
@@ -31,12 +36,15 @@ public class ShipController : MonoBehaviour
 
         PlaceholderAI.Outputs outputs = PlaceholderAI.Predict(inputs);
 
-        float thrust = outputs.thrust;
-        float steer = outputs.steer;
+        _thrust += outputs.thrustJerk * Time.fixedDeltaTime;
+        _steer += outputs.steerJerk * Time.fixedDeltaTime;
+
+        _thrust = Mathf.Clamp(_thrust, -1f, 1f);
+        _steer = Mathf.Clamp(_steer, -1f, 1f);
 
         Vector3 forward = Vector3.Scale(new Vector3(1, 0, 1), transform.forward);
 
-        _rigidbody.AddForceAtPosition(-steer * transform.right * _steerPower, _motor.position);
-        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, forward * _maxSpeed * thrust, _power);
+        _rigidbody.AddForceAtPosition(-_steer * transform.right * _steerPower, _motor.position);
+        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, forward * _maxSpeed * _thrust, _power);
     }
 }

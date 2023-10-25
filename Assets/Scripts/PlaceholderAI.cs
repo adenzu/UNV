@@ -12,14 +12,16 @@ public static class PlaceholderAI
 
         Outputs outputs = new Outputs
         {
-            thrust = Mathf.Clamp01(outputFactor / inputs.targetDeadZone),
-            steer = (Vector3.Angle(inputs.right, inputs.target - inputs.position) > 90 ? -1 : 1) * Mathf.Clamp01(outputFactor)
+            thrustJerk = distance < inputs.targetDeadZone ? (inputs.thrust * inputs.thrust > 0.01f ? -Mathf.Sign(inputs.thrust) : 0) : 1,
+            steerJerk = (Vector3.Angle(inputs.right, inputs.target - inputs.position) > 90 ? -1 : 1) * Mathf.Clamp01(outputFactor)
         };
         return outputs;
     }
 
     public struct Inputs
     {
+        public float thrust;
+        public float steer;
         public Vector3 right;
         public Vector3 position;
         public Vector3 target;
@@ -28,7 +30,7 @@ public static class PlaceholderAI
 
     public struct Outputs
     {
-        public float thrust;
-        public float steer;
+        public float thrustJerk;
+        public float steerJerk;
     }
 }
