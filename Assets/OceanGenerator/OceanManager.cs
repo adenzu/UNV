@@ -1,21 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 /**
 Main class responsible for managing islands (generate them or destroy)
  */
 public class OceanManager : MonoBehaviour
 {
-	private static System.Object ThreadLock = new System.Object();
+    private static System.Object ThreadLock = new System.Object();
 
-	public int OneGridPointToWorld = 10;
+    public int OneGridPointToWorld = 10;
     public int Range = 2; //world visiblity (higher val == more islands in memory)
     public int DeleteDistance = 10; //distance after which island is going to be deleted
 
     public OceanGenerator OceanGenerator; //generate used to determine where islands should be 
-	public Material material;
-	public Transform WorldCamera;
+    public Material material;
+    public Transform WorldCamera;
 
     [HideInInspector]
     public List<Island> Islands;
@@ -44,7 +45,8 @@ public class OceanManager : MonoBehaviour
         CurrentCameraChunkPosition = new Vector2Int();
         LastCameraChunkPosition = new Vector2Int(-10000, -10000);
 
-        if(OceanGenerator == null) {
+        if (OceanGenerator == null)
+        {
             Debug.LogError("Ocean generator not found, critical error!");
         }
     }
@@ -52,18 +54,24 @@ public class OceanManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        IslandCreationHandling();
+    }
+
+    public void IslandCreationHandling(bool force = false)
+    {
+
         CurrentCameraChunkPosition.x = Mathf.CeilToInt((WorldCamera.transform.position.x - OneGridPointToWorld / 2f) / OneGridPointToWorld);
         CurrentCameraChunkPosition.y = Mathf.CeilToInt((WorldCamera.transform.position.z - OneGridPointToWorld / 2f) / OneGridPointToWorld);
 
-        if (!CurrentCameraChunkPosition.Equals(LastCameraChunkPosition))
+        if (force || !CurrentCameraChunkPosition.Equals(LastCameraChunkPosition))
         {
             //remove old chunks
             List<Island> ToRemove = new List<Island>();
             foreach (Island island in Islands)
             {
-                int RangeToChunk = (int) Vector2Int.Distance(CurrentCameraChunkPosition, island.WorldGridPosition);
+                int RangeToChunk = (int)Vector2Int.Distance(CurrentCameraChunkPosition, island.WorldGridPosition);
 
-                if (RangeToChunk > DeleteDistance)
+                if (force || RangeToChunk > DeleteDistance)
                 {
                     ToRemove.Add(island);
                 }
@@ -87,8 +95,10 @@ public class OceanManager : MonoBehaviour
                     int GridX = x + CurrentCameraChunkPosition.x;
                     int GridY = z + CurrentCameraChunkPosition.y;
 
-                    if(IsIsland(GridX, GridY)) {
-                        if (!IslandExists(GridX, GridY)) {
+                    if (IsIsland(GridX, GridY))
+                    {
+                        if (!IslandExists(GridX, GridY))
+                        {
                             CreateIsland(GridX, GridY);
                         }
                     }
@@ -99,28 +109,34 @@ public class OceanManager : MonoBehaviour
 
         LastCameraChunkPosition.Set(CurrentCameraChunkPosition.x, CurrentCameraChunkPosition.y);
 
-		if(Time.time - LastTimeMeshUpdate > CanUpdateMeshAfter) {
-			Island chunkToUpdate = null;
-			float curDst = 1000000f;
-			foreach(Island chunk in Islands) {
-				if(chunk.CreateMeshRequest) {
-					float dst = Vector3.Distance(WorldCamera.transform.position, chunk.transform.position);
-					if(dst < curDst) {
-						curDst = dst;	
-						chunkToUpdate = chunk;
-					}
-				}
-			}
+        if (Time.time - LastTimeMeshUpdate > CanUpdateMeshAfter)
+        {
+            Island chunkToUpdate = null;
+            float curDst = 1000000f;
+            foreach (Island chunk in Islands)
+            {
+                if (chunk.CreateMeshRequest)
+                {
+                    float dst = Vector3.Distance(WorldCamera.transform.position, chunk.transform.position);
+                    if (dst < curDst)
+                    {
+                        curDst = dst;
+                        chunkToUpdate = chunk;
+                    }
+                }
+            }
 
-			if(chunkToUpdate != null) {
-				chunkToUpdate.MakeMesh();
-				chunkToUpdate.CreateMeshRequest = false;
-			}
+            if (chunkToUpdate != null)
+            {
+                chunkToUpdate.MakeMesh();
+                chunkToUpdate.CreateMeshRequest = false;
+            }
 
-			LastTimeMeshUpdate = Time.time;
-		}
+            LastTimeMeshUpdate = Time.time;
+        }
 
-        if(Time.time - LastTimePartColliderUpdate > CanUpdateChunkPartColliderAfter) {
+        if (Time.time - LastTimePartColliderUpdate > CanUpdateChunkPartColliderAfter)
+        {
             CanUpdatePartCollider = true;
             LastTimePartColliderUpdate = Time.time;
         }
@@ -128,7 +144,8 @@ public class OceanManager : MonoBehaviour
         IslandsAlive = Islands.Count;
     }
 
-    private bool IsIsland(int GridX, int GridY) {
+    private bool IsIsland(int GridX, int GridY)
+    {
         return OceanGenerator.IsIsland(GridX, GridY, this);
     }
 
@@ -168,6 +185,8 @@ public class OceanManager : MonoBehaviour
 
             island.Init(this, new Vector2Int(x, z), OceanGenerator.GetGeneratorForIsland(x, z));
             Islands.Add(island);
+
+            chunk.transform.localPosition = Vector3.Scale(new Vector3(1, 0, 1), chunk.transform.localPosition);
         }
     }
 }

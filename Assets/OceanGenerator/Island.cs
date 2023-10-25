@@ -116,7 +116,7 @@ public class Island : MonoBehaviour
             {
                 bin = new TriangleBin(mesh, Size, Size, minPointRadius * 2.0f);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Debug.Log("triangulation failed!");
             }
@@ -247,7 +247,7 @@ public class Island : MonoBehaviour
             float elevation = elevations[index];
             return new Vector3((float)vertex.x, elevation, (float)vertex.y);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return default(Vector3);
         }
