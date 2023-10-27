@@ -9,15 +9,24 @@ public class Floater : MonoBehaviour
     Source:
     https://youtu.be/v7ag-NeSMSQ
     */
-    [SerializeField] private float _depthBeforeSubmersion;
+    // [SerializeField] private float _depthBeforeSubmersion;
     [SerializeField] private float _displacementAmount;
     [SerializeField] private int _floaters;
     [SerializeField] private float _waterDrag;
     [SerializeField] private float _waterAngularDrag;
     [SerializeField] private WaterSurface _waterSurface;
     [SerializeField] private Rigidbody _rigidbody;
+
     private WaterSearchParameters searchParameters;
     private WaterSearchResult searchResult;
+
+    private void Awake()
+    {
+        if (_waterSurface == null)
+        {
+            _waterSurface = FindObjectOfType<WaterSurface>();
+        }
+    }
 
     private void FixedUpdate()
     {
