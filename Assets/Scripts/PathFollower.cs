@@ -3,25 +3,71 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using DG.Tweening;
-
-namespace UNV.Path
+namespace UNV.Path2D
 {
+    [RequireComponent(typeof(Rigidbody))]
     public class PathFollower : MonoBehaviour
     {
         public PathCreator pathCreator;
 
-        private Vector3[] _pathPoints;
-        private float _pathLength;
+        [SerializeField] private bool _startOnAwake = true;
+
+        [SerializeField, Min(0)] private float _force = 1f;
+        [SerializeField, Min(0)] private float _speed = 5f;
 
         [SerializeField] private bool _loop = false;
 
-        [SerializeField] private float _duration = 5f;
+        [SerializeField] private bool _lookForward = true;
+
+        [SerializeField, Min(0)] private float _deadZone = 0.1f;
+
+        private Vector3[] _pathPoints;
+
+        private int _targetPointIndex = 0;
+        private bool _isMoving = false;
+
+        private Rigidbody _rigidbody;
 
         private void Awake()
         {
+            _rigidbody = GetComponent<Rigidbody>();
             UpdatePath();
-            StartMotion();
+            if (_startOnAwake)
+            {
+                PlayMotion();
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (_isMoving)
+            {
+                Vector3 targetPosition = _pathPoints[_targetPointIndex];
+                Vector3 direction = (targetPosition - transform.position).normalized;
+                PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, direction * _speed, _force);
+
+                if (_lookForward)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(direction);
+                    transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, 0.1f);
+                }
+
+                if (Vector2.Distance(transform.position.XZ(), targetPosition.XZ()) < _deadZone)
+                {
+                    _targetPointIndex++;
+                    if (_targetPointIndex >= _pathPoints.Length)
+                    {
+                        if (_loop)
+                        {
+                            _targetPointIndex = 0;
+                        }
+                        else
+                        {
+                            PauseMotion();
+                        }
+                    }
+                }
+            }
         }
 
         public void UpdatePath()
@@ -32,37 +78,30 @@ namespace UNV.Path
         public void SetPath(Vector3[] pathPoints)
         {
             _pathPoints = pathPoints;
+            _targetPointIndex = 0;
             transform.position = _pathPoints[0];
-            UpdatePathLength();
         }
 
-        public void StartMotion()
+        public void PlayMotion()
         {
-            UpdatePath();
-            transform.DOKill();
-            transform.DOPath(_pathPoints, _duration, PathType.CatmullRom)
-            .SetOptions(_loop)
-            .SetLoops(_loop ? -1 : 0)
-            .SetLookAt(0.01f)
-            .SetEase(Ease.Linear);
+            _isMoving = true;
         }
 
         public void PauseMotion()
         {
-            transform.DOPause();
+            _isMoving = false;
         }
 
-        public void ResumeMotion()
+        private void OnDrawGizmosSelected()
         {
-            transform.DOPlay();
-        }
-
-        private void UpdatePathLength()
-        {
-            _pathLength = 0;
-            for (int i = 1; i < _pathPoints.Length; i++)
+            Vector3[] pathPoints = pathCreator.GetPathPoints();
+            if (pathPoints != null)
             {
-                _pathLength += Vector3.Distance(_pathPoints[i], _pathPoints[i - 1]);
+                Gizmos.color = Color.red;
+                for (int i = 0; i < pathPoints.Length; i++)
+                {
+                    Gizmos.DrawSphere(pathPoints[i], _deadZone);
+                }
             }
         }
     }

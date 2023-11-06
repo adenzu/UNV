@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UNV.Path {
+namespace UNV.Path2D {
     public static class BezierCurve
     {
         public static Vector2[] GetBezierCurvePathPoints(Vector2[] controlPoints, int pathSegmentCount)

@@ -64,4 +64,8 @@ public class ObjectSpawner : MonoBehaviour
         _previousExternalRadius = _externalRadius;
         _previousInternalRadius = _internalRadius;
     }
+
+    private void OnValidate() {
+        RearrangeObjects();
+    }
 }

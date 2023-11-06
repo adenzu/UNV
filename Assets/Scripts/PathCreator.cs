@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UNV.Path
+namespace UNV.Path2D
 {
     [ExecuteInEditMode]
     public class PathCreator : MonoBehaviour
@@ -16,7 +16,7 @@ namespace UNV.Path
         [SerializeField] private Color _controlPointColor = Color.green;
         [SerializeField] private Color _pathColor = Color.red;
 
-        private void OnDrawGizmos()
+        private void OnDrawGizmosSelected()
         {
             if (controlPoints.Length >= 4)
             {

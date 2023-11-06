@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace UNV.Path
+namespace UNV.Path2D
 {
     [CustomEditor(typeof(PathCreator))]
     public class PathCreatorInspector : Editor

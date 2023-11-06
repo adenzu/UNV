@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 
 
-namespace UNV.Path
+namespace UNV.Path2D
 {
     [CustomEditor(typeof(PathFollower))]
     public class PathFollowerInspector : Editor
@@ -20,17 +20,17 @@ namespace UNV.Path
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            if (GUILayout.Button("Start Motion"))
+            if (GUILayout.Button("Play Motion"))
             {
-                _pathFollower.StartMotion();
+                _pathFollower.PlayMotion();
             }
             if (GUILayout.Button("Pause Motion"))
             {
                 _pathFollower.PauseMotion();
             }
-            if (GUILayout.Button("Resume Motion"))
+            if (GUILayout.Button("Update Path"))
             {
-                _pathFollower.ResumeMotion();
+                _pathFollower.UpdatePath();
             }
         }
     }
