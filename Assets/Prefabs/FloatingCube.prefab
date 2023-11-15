@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 10101856108689525}
   - component: {fileID: 1232775307737626313}
   - component: {fileID: 5681966636141646946}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: FloatingCube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -119,7 +119,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d0d4e8befdec4b4cb48418cddfac36e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _depthBeforeSubmersion: 0
   _displacementAmount: 0.2
   _floaters: 2
   _waterDrag: 2
