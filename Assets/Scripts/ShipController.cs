@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class ShipController : MonoBehaviour
 {
-    [SerializeField] private Transform _target;
+    [SerializeField] private float _obstacleAvoidanceDistance = 5f;
     [SerializeField] private float _targetDeadZone = 0.1f;
 
     [SerializeField] private Transform _motor;
@@ -12,25 +12,127 @@ public class ShipController : MonoBehaviour
     [SerializeField] private float _power = 5f;
     [SerializeField] private float _maxSpeed = 10f;
 
+    [SerializeField] private TargetOvershootOptions _onTargetOvershoot = TargetOvershootOptions.DoNothing;
+
+    public float ShipRadius { get; private set; }
+    public float TurnMinRadius => ShipRadius * _maxSpeed / _steerPower;
+
     private float _thrust;
     private float _steer;
+
+    private Vector3 _destination;
+    private Vector3[] _waypoints;
+    private int _currentWaypointIndex;
+    private Vector3 _currentWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypoints[_currentWaypointIndex] : transform.position;
 
     private Rigidbody _rigidbody;
 
     private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        ShipRadius = (transform.position - _motor.position).XZ().magnitude;
+    }
+
+    public void SetDestination(Vector3 destination)
+    {
+        _destination = destination;
+        CreateGrid();
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        CreateGrid();
+    }
+
+    private void CreateGrid()
+    {
+        PathGrid.CreateGrid();
+        PathGrid.DilateObstacles(Mathf.FloorToInt(_obstacleAvoidanceDistance / PathGrid.NodeSize));
+        PathRequestManager.RequestPath(
+            transform.position,
+            _destination,
+            OnPathFound,
+            () => transform.forward.XZ().normalized,
+            angle => angle < 75f * _steerPower / _maxSpeed ? Mathf.RoundToInt(angle / 3f) : int.MaxValue,
+            Mathf.CeilToInt((TurnMinRadius - _obstacleAvoidanceDistance) / PathGrid.NodeSize)
+        );
+    }
+
+    private void OnPathFound(Vector3[] path, bool success)
+    {
+        _waypoints = success ? path : null;
+        _currentWaypointIndex = 0;
+    }
+
+    private bool IsTargetReached()
+    {
+        return (_currentWaypoint - transform.position).magnitude < _targetDeadZone;
+    }
+
+    private void OnTargetReached()
+    {
+        _currentWaypointIndex++;
+        if (IsArrivedToDestination())
+        {
+            OnArrivalToDestination();
+        }
+    }
+
+    private bool IsTargetOvershoot()
+    {
+        if (_waypoints == null || _currentWaypointIndex >= _waypoints.Length - 1)
+        {
+            return false;
+        }
+        Vector2 targetDirection = (_currentWaypoint - transform.position).XZ().normalized;
+        Vector2 forward = transform.forward.XZ().normalized;
+        float targetAngle = Vector2.Angle(targetDirection, forward);
+        return targetAngle > 90f;
+    }
+
+    public void OnTargetOvershoot()
+    {
+        if (_onTargetOvershoot == TargetOvershootOptions.Skip)
+        {
+            OnTargetReached();
+        }
+    }
+
+    private bool IsArrivedToDestination()
+    {
+        return _waypoints == null || _currentWaypointIndex >= _waypoints.Length;
+    }
+
+    private void OnArrivalToDestination()
+    {
+        _waypoints = null;
+        _currentWaypointIndex = 0;
     }
 
     private void FixedUpdate()
     {
+        if (IsArrivedToDestination())
+        {
+            return;
+        }
+
+        if (IsTargetReached())
+        {
+            OnTargetReached();
+        }
+
+        if (IsTargetOvershoot())
+        {
+            OnTargetOvershoot();
+        }
+
         PlaceholderAI.Inputs inputs = new PlaceholderAI.Inputs
         {
             thrust = _thrust,
             steer = _steer,
             right = transform.right,
             position = transform.position,
-            target = _target.position,
+            target = _currentWaypoint,
             targetDeadZone = _targetDeadZone
         };
 
@@ -44,7 +146,28 @@ public class ShipController : MonoBehaviour
 
         Vector3 forward = Vector3.Scale(new Vector3(1, 0, 1), transform.forward);
 
-        _rigidbody.AddForceAtPosition(-_steer * transform.right * _steerPower, _motor.position);
-        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, forward * _maxSpeed * _thrust, _power);
+        Vector3 thrustForce = forward * _maxSpeed * _thrust;
+        Vector3 steerForce = -_steer * transform.right * _steerPower;
+
+        _rigidbody.AddForceAtPosition(steerForce, _motor.position);
+        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, thrustForce, _power);
     }
+
+    private void OnDrawGizmos()
+    {
+        if (IsArrivedToDestination())
+        {
+            return;
+        }
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(_currentWaypoint, _targetDeadZone);
+        foreach (Vector3 waypoint in _waypoints)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(waypoint, Vector3.one);
+        }
+    }
+
+    private enum TargetOvershootOptions { DoNothing, Skip }
 }

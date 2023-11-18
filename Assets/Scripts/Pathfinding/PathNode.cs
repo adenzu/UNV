@@ -1,14 +1,18 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PathNode
+public class PathNode : IComparable<PathNode>
 {
     public bool walkable;
     public int gridX;
     public int gridY;
     public int costFromStart;
     public int costToTarget;
+
+    public int TotalCost => costFromStart + costToTarget;
+
     public Vector3 worldPosition;
     public PathNode parent;
 
@@ -20,11 +24,8 @@ public class PathNode
         this.gridY = gridY;
     }
 
-    public int fCost
+    public int CompareTo(PathNode other)
     {
-        get
-        {
-            return costFromStart + costToTarget;
-        }
+        return TotalCost.CompareTo(other.TotalCost);
     }
 }
