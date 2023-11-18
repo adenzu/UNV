@@ -36,8 +36,8 @@ public class ShipController : MonoBehaviour
 
         PlaceholderAI.Outputs outputs = PlaceholderAI.Predict(inputs);
 
-        _thrust += outputs.thrustJerk * Time.fixedDeltaTime;
-        _steer += outputs.steerJerk * Time.fixedDeltaTime;
+        _thrust = outputs.thrust; //+= outputs.thrustJerk * Time.fixedDeltaTime;
+        _steer = outputs.steer; //+= outputs.steerJerk * Time.fixedDeltaTime;
 
         _thrust = Mathf.Clamp(_thrust, -1f, 1f);
         _steer = Mathf.Clamp(_steer, -1f, 1f);
