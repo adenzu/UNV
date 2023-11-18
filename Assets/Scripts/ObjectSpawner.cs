@@ -9,6 +9,10 @@ public class ObjectSpawner : MonoBehaviour
     [SerializeField, Min(0)] private int _numberOfObjectsToSpawn;
     [SerializeField, Min(0)] private float _externalRadius;
     [SerializeField, Min(0)] private float _internalRadius;
+    
+    [SerializeField] private bool _randomizeSize;
+    [SerializeField, Min(0.01f)] private float _minSizeScale;
+    [SerializeField, Min(0.01f)] private float _maxSizeScale;
 
     private float _previousExternalRadius;
     private float _previousInternalRadius;
@@ -26,6 +30,9 @@ public class ObjectSpawner : MonoBehaviour
         {
             GameObject spawnedObject = Instantiate(_objectToSpawn, transform);
             spawnedObject.transform.localPosition = GetRandomSpawnPosition();
+            if (_randomizeSize) {
+                spawnedObject.transform.localScale *= Random.Range(_minSizeScale, _maxSizeScale);
+            }
         }
     }
 

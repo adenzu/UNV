@@ -1,34 +1,52 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+
 
 [CustomEditor(typeof(ObjectSpawner))]
 public class ObjectSpawnerInspector : Editor
 {
-    public override VisualElement CreateInspectorGUI()
+    ObjectSpawner objectSpawner;
+    SerializedProperty randomizeSizeProperty;
+
+    private void OnEnable()
     {
-        ObjectSpawner objectSpawner = (ObjectSpawner)target;
-        VisualElement root = new VisualElement();
+        objectSpawner = (ObjectSpawner)target;
+        randomizeSizeProperty = serializedObject.FindProperty("_randomizeSize");
+    }
 
-        root.Add(new PropertyField(serializedObject.FindProperty("_objectToSpawn")));
-        root.Add(new PropertyField(serializedObject.FindProperty("_numberOfObjectsToSpawn")));
-        root.Add(new PropertyField(serializedObject.FindProperty("_externalRadius")));
-        root.Add(new PropertyField(serializedObject.FindProperty("_internalRadius")));
+    public override void OnInspectorGUI()
+    {
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_objectToSpawn"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_numberOfObjectsToSpawn"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_externalRadius"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_internalRadius"));
+        EditorGUILayout.PropertyField(randomizeSizeProperty);
 
-        Button spawnButton = new Button(objectSpawner.RespawnObjects);
-        spawnButton.text = "Respawn";
-        root.Add(spawnButton);
+        if (randomizeSizeProperty.boolValue)
+        {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_minSizeScale"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_maxSizeScale"));
+        }
 
-        Button rearrangeButton = new Button(objectSpawner.RearrangeObjects);
-        rearrangeButton.text = "Rearrange";
-        root.Add(rearrangeButton);
+        if (GUILayout.Button("Respawn"))
+        {
+            objectSpawner.RespawnObjects();
+        }
 
-        Button despawnButton = new Button(objectSpawner.DespawnObjects);
-        despawnButton.text = "Despawn";
-        root.Add(despawnButton);
+        if (GUILayout.Button("Rearrange"))
+        {
+            objectSpawner.RearrangeObjects();
+        }
 
-        return root;
+        if (GUILayout.Button("Despawn"))
+        {
+            objectSpawner.DespawnObjects();
+        }
+
+        serializedObject.ApplyModifiedProperties();
     }
 }
