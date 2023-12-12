@@ -13,7 +13,7 @@ public static class PlaceholderAI
         Outputs outputs = new Outputs
         {
             thrust = distance < inputs.targetDeadZone ? 0 : 1,
-            steer = (90f - angle) / 90f
+            steer = angle > 90f ? -1 : 1
         };
 
         return outputs;

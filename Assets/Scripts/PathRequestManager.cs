@@ -1,13 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UNV.Pathfinding;
 
 public class PathRequestManager : MonoBehaviour
 {
     public static PathRequestManager Instance { get; private set; }
 
+    public static bool IsProcessingPath => Instance._isProcessingPath;
+
     private Queue<PathRequest> _pathRequestQueue;
     private PathRequest _currentPathRequest;
+
     private bool _isProcessingPath;
 
     private void Awake()
@@ -15,7 +19,6 @@ public class PathRequestManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            _pathRequestQueue = new Queue<PathRequest>();
         }
         else
         {
@@ -23,16 +26,20 @@ public class PathRequestManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        _pathRequestQueue = new Queue<PathRequest>();
+    }
+
     public static void RequestPath(
-        Vector3 pathStart, 
-        Vector3 pathEnd, 
-        System.Action<Vector3[], bool> callback, 
-        Pathfinding.GetDefaultDirectionDelegate getDefaultDirection,
-        Pathfinding.AngleCostFunctionDelegate angleCostFunction,
-        int neighbourRadius
+        Vector3 pathStart,
+        Vector3 pathEnd,
+        float angleChange,
+        System.Action<Vector3[], bool> callback,
+        Pathfinding.GetDefaultDirectionDelegate getDefaultDirection
     )
     {
-        PathRequest newRequest = new PathRequest(pathStart, pathEnd, callback, getDefaultDirection, angleCostFunction, neighbourRadius);
+        PathRequest newRequest = new PathRequest(pathStart, pathEnd, angleChange, callback, getDefaultDirection);
         Instance._pathRequestQueue.Enqueue(newRequest);
         Instance.TryProcessNext();
     }
@@ -51,8 +58,7 @@ public class PathRequestManager : MonoBehaviour
             _currentPathRequest = _pathRequestQueue.Dequeue();
             _isProcessingPath = true;
             Pathfinding.GetDefaultDirection = _currentPathRequest.getDefaultDirection;
-            Pathfinding.AngleCostFunction = _currentPathRequest.angleCostFunction;
-            Pathfinding.NeighbourRadius = _currentPathRequest.neighbourRadius;
+            Pathfinding.angleChangeOverDistance = _currentPathRequest.angleChange;
             Pathfinding.StartFindingPath(_currentPathRequest.start, _currentPathRequest.end);
         }
     }
@@ -61,26 +67,23 @@ public class PathRequestManager : MonoBehaviour
     {
         public Vector3 start;
         public Vector3 end;
+        public float angleChange;
         public System.Action<Vector3[], bool> callback;
         public Pathfinding.GetDefaultDirectionDelegate getDefaultDirection;
-        public Pathfinding.AngleCostFunctionDelegate angleCostFunction;
-        public int neighbourRadius;
 
         public PathRequest(
-            Vector3 start, 
-            Vector3 end, 
+            Vector3 start,
+            Vector3 end,
+            float angleChange,
             System.Action<Vector3[], bool> callback,
-            Pathfinding.GetDefaultDirectionDelegate getDefaultDirection,
-            Pathfinding.AngleCostFunctionDelegate angleCostFunction,
-            int neighbourRadius
+            Pathfinding.GetDefaultDirectionDelegate getDefaultDirection
         )
         {
             this.start = start;
             this.end = end;
+            this.angleChange = angleChange;
             this.callback = callback;
             this.getDefaultDirection = getDefaultDirection;
-            this.angleCostFunction = angleCostFunction;
-            this.neighbourRadius = neighbourRadius;
         }
     }
 }

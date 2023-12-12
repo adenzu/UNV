@@ -4,214 +4,263 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Pathfinding : MonoBehaviour
+
+namespace UNV.Pathfinding
 {
-    public static Pathfinding Instance { get; private set; }
-
-    public static int NeighbourRadius = 1;
-
-    public delegate Vector2 GetDefaultDirectionDelegate();
-    public delegate int AngleCostFunctionDelegate(float angle);
-
-    public static GetDefaultDirectionDelegate GetDefaultDirection;
-    public static AngleCostFunctionDelegate AngleCostFunction;
-
-    private void Awake()
+    public class Pathfinding : MonoBehaviour
     {
-        if (Instance == null)
+        public static Pathfinding Instance { get; private set; }
+
+        public delegate Vector2 GetDefaultDirectionDelegate();
+        // public delegate int AngleCostFunctionDelegate(float angle);
+
+        public static GetDefaultDirectionDelegate GetDefaultDirection;
+        // public static AngleCostFunctionDelegate AngleCostFunction;
+        public static float angleChangeOverDistance;
+
+        private GridManager _gridManager;
+
+        private void Awake()
         {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public static void StartFindingPath(Vector3 startPosition, Vector3 targetPosition)
-    {
-        Instance.StartCoroutine(Instance.FindPath(startPosition, targetPosition));
-    }
-
-    private IEnumerator FindPath(Vector3 startPosition, Vector3 targetPosition)
-    {
-        Vector3[] waypoints = new Vector3[0];
-        bool pathSuccess = false;
-
-        PathNode startNode = PathGrid.PathNodeFromWorldPoint(startPosition);
-        PathNode targetNode = PathGrid.PathNodeFromWorldPoint(targetPosition);
-
-        if (targetNode.walkable)
-        {
-            HashSet<PathNode> visitedNodes = new HashSet<PathNode>();
-            MinHeap<PathNode> nodesToVisit = new MinHeap<PathNode>();
-            nodesToVisit.Add(startNode);
-
-            void AddNeighbourToNodesToVisit(PathNode node, PathNode neighbour, int newCostToNeighbour)
+            if (Instance == null)
             {
-                neighbour.costFromStart = newCostToNeighbour;
-                neighbour.costToTarget = GetDistanceCost(neighbour, targetNode);
-                neighbour.parent = node;
-                nodesToVisit.Add(neighbour);
+                Instance = this;
             }
-
-            while (nodesToVisit.Count > 0)
+            else
             {
-                PathNode node = nodesToVisit.Pop();
-                visitedNodes.Add(node);
+                Destroy(gameObject);
+            }
+        }
 
-                if (node == targetNode)
+        private void Start()
+        {
+            _gridManager = GridManager.Instance;
+        }
+
+        public static void StartFindingPath(Vector3 startPosition, Vector3 targetPosition)
+        {
+            Instance.StartCoroutine(Instance.FindPath(startPosition, targetPosition));
+        }
+
+        private IEnumerator FindPath(Vector3 startPosition, Vector3 targetPosition)
+        {
+            Vector3[] waypoints = new Vector3[0];
+            bool pathSuccess = false;
+
+            NodeBase startNode = _gridManager.GetAt(startPosition);
+            NodeBase targetNode = _gridManager.GetAt(targetPosition);
+
+            startNode.angleRange = 2 * angleChangeOverDistance;
+
+            if (targetNode.walkable)
+            {
+                HashSet<NodeBase> visitedNodes = new HashSet<NodeBase>();
+                MinHeap<NodeBase> nodesToVisit = new MinHeap<NodeBase>();
+                nodesToVisit.Add(startNode);
+
+                void AddNeighbourToNodesToVisit(NodeBase node, NodeBase neighbour, int newCostToNeighbour)
                 {
-                    pathSuccess = true;
-                    break;
+                    Vector3 nodePosition = node.worldPosition;
+                    Vector3 neighbourPosition = neighbour.worldPosition;
+
+                    Vector2 nodeDifference = node.pathParent == null ? GetDefaultDirection.Invoke() : (nodePosition - node.pathParent.worldPosition).XZ();
+                    Vector2 neighbourDifference = (neighbourPosition - nodePosition).XZ();
+
+                    const float directionEqualityCap = 5f;
+                    const float angleRangeCap = 100f;
+
+                    float angle = Vector2.Angle(nodeDifference, neighbourDifference);
+                    float angleRangeChange = angleChangeOverDistance * neighbourDifference.magnitude * 2;
+
+                    if (angle < directionEqualityCap)
+                    {
+                        if (node.angleRange + angleRangeChange <= angleRangeCap)
+                        {
+                            neighbour.angleRange = node.angleRange + angleRangeChange;
+                        }
+                    }
+                    else
+                    {
+                        neighbour.angleRange = angleRangeChange;
+                    }
+
+                    neighbour.costFromStart = newCostToNeighbour;
+                    neighbour.costToTarget = GetDistanceCost(neighbour, targetNode);
+
+                    neighbour.pathParent = node;
+                    nodesToVisit.Add(neighbour);
                 }
 
-                foreach (PathNode neighbour in PathGrid.GetNeighbours(node, NeighbourRadius))
+                while (nodesToVisit.Count > 0)
                 {
-                    if (!neighbour.walkable || visitedNodes.Contains(neighbour))
+                    NodeBase node = nodesToVisit.Pop();
+                    visitedNodes.Add(node);
+
+                    if (node == targetNode)
                     {
-                        continue;
+                        pathSuccess = true;
+                        break;
                     }
-                    int angleCost = GetAngleCost(node, neighbour);
-                    if (angleCost == int.MaxValue)
+
+                    foreach (NodeBase neighbour in _gridManager.GetNeighbours(node))
                     {
-                        continue;
-                    }
-                    int newCostToNeighbour = node.costFromStart + GetDistanceCost(node, neighbour) + angleCost;
-                    if (!nodesToVisit.Contains(neighbour))
-                    {
-                        AddNeighbourToNodesToVisit(node, neighbour, newCostToNeighbour);
-                    }
-                    else if (newCostToNeighbour < neighbour.costFromStart)
-                    {
-                        nodesToVisit.Remove(neighbour);
-                        AddNeighbourToNodesToVisit(node, neighbour, newCostToNeighbour);
+                        if (
+                            !neighbour.walkable ||
+                            visitedNodes.Contains(neighbour) ||
+                            !CanTurnInTime(node, neighbour)
+                        )
+                        {
+                            continue;
+                        }
+                        int angleCost = GetAngleCost(node, neighbour);
+                        int distanceCost = GetDistanceCost(node, neighbour);
+                        int newCostToNeighbour = node.costFromStart + distanceCost + angleCost;
+                        if (!nodesToVisit.Contains(neighbour))
+                        {
+                            AddNeighbourToNodesToVisit(node, neighbour, newCostToNeighbour);
+                        }
+                        else if (newCostToNeighbour < neighbour.costFromStart)
+                        {
+                            nodesToVisit.Remove(neighbour);
+                            AddNeighbourToNodesToVisit(node, neighbour, newCostToNeighbour);
+                        }
                     }
                 }
             }
-        }
 
-        yield return null;
+            yield return null;
 
-        if (pathSuccess)
-        {
-            waypoints = RetracePath(startNode, targetNode);
-        }
-
-        PathRequestManager.OnPathProcessFinish(waypoints, pathSuccess);
-    }
-
-    private Vector3[] RetracePath(PathNode startNode, PathNode endNode, bool simplify = true)
-    {
-        List<PathNode> path = new List<PathNode>();
-        PathNode currentNode = endNode;
-        path.Add(endNode);
-        while (currentNode != startNode)
-        {
-            path.Add(currentNode);
-            currentNode = currentNode.parent;
-        }
-
-        if (simplify)
-        {
-            return SimplifyPath(path).Reverse().ToArray();
-        }
-        else
-        {
-            return path.Select(node => node.worldPosition).Reverse().ToArray();
-        }
-    }
-
-    private Vector2 GetDirection(PathNode nodeA, PathNode nodeB)
-    {
-        return new Vector2(nodeB.gridX - nodeA.gridX, nodeB.gridY - nodeA.gridY);
-    }
-
-    private Vector3[] SimplifyPath(List<PathNode> path)
-    {
-        List<Vector3> waypoints = new List<Vector3>();
-
-        waypoints.Add(path[0].worldPosition);
-
-        for (int i = 1; i < path.Count - 1; i++)
-        {
-            Vector2 directionTo = GetDirection(path[i - 1], path[i]);
-            Vector2 directionFrom = GetDirection(path[i], path[i + 1]);
-            if (directionTo != directionFrom)
+            if (pathSuccess)
             {
-                waypoints.Add(path[i].worldPosition);
+                waypoints = RetracePath(startNode, targetNode);
+            }
+
+            PathRequestManager.OnPathProcessFinish(waypoints, pathSuccess);
+        }
+
+        private Vector3[] RetracePath(NodeBase startNode, NodeBase endNode, bool simplify = true)
+        {
+            List<NodeBase> path = new List<NodeBase>();
+            NodeBase currentNode = endNode;
+            path.Add(endNode);
+            while (currentNode != startNode)
+            {
+                path.Add(currentNode);
+                currentNode = currentNode.pathParent;
+            }
+
+            if (simplify)
+            {
+                return SimplifyPath(path).Reverse().ToArray();
+            }
+            else
+            {
+                return path.Select(node => node.worldPosition).Reverse().ToArray();
             }
         }
 
-        waypoints.Add(path[path.Count - 1].worldPosition);
-        return waypoints.ToArray();
-    }
-
-    private int GetDistanceCost(PathNode nodeA, PathNode nodeB)
-    {
-        int distanceX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
-        int distanceY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
-
-        const int diagonalCostCoefficient = 14;
-        const int straightCostCoefficient = 10;
-
-        return distanceX > distanceY ? diagonalCostCoefficient * distanceY + straightCostCoefficient * (distanceX - distanceY) : diagonalCostCoefficient * distanceX + straightCostCoefficient * (distanceY - distanceX);
-    }
-
-    private int GetAngleCost(PathNode nodeA, PathNode nodeB)
-    {
-        Vector2 comingDirection = nodeA.parent == null ? GetDefaultDirection.Invoke() : GetDirection(nodeA.parent, nodeA);
-        Vector2 goingDirection = GetDirection(nodeA, nodeB);
-        return AngleCostFunction.Invoke(Vector2.Angle(comingDirection, goingDirection));
-    }
-
-    private class MinHeap<T>
-    {
-        private List<T> _list;
-
-        public int Count => _list.Count;
-
-        public MinHeap()
+        private Vector3[] SimplifyPath(List<NodeBase> path)
         {
-            _list = new List<T>();
-        }
+            List<Vector3> waypoints = new List<Vector3>();
 
-        public int Add(T item)
-        {
-            int index = _list.BinarySearch(item);
-            if (index < 0)
+            waypoints.Add(path[0].worldPosition);
+
+            for (int i = 1; i < path.Count - 1; i++)
             {
-                index = ~index;
+                Vector2 directionTo = _gridManager.GetDirection(path[i - 1], path[i]);
+                Vector2 directionFrom = _gridManager.GetDirection(path[i], path[i + 1]);
+                if (Vector2.Angle(directionTo, directionFrom) > angleChangeOverDistance)
+                {
+                    waypoints.Add(path[i].worldPosition);
+                }
             }
-            _list.Insert(index, item);
-            return index;
+
+            waypoints.Add(path[path.Count - 1].worldPosition);
+            return waypoints.ToArray();
         }
 
-        public bool Contains(T item)
+        private bool CanTurnInTime(NodeBase from, NodeBase to)
         {
-            return _list.Contains(item);
+            Vector2 fromDirection = from.pathParent == null ? GetDefaultDirection.Invoke() : (from.worldPosition - from.pathParent.worldPosition).XZ();
+            Vector2 toDirection = (to.worldPosition - from.worldPosition).XZ();
+            return Vector2.Angle(fromDirection, toDirection) <= from.angleRange;
         }
 
-        public void Remove(T item)
+        private int GetDistanceCost(NodeBase from, NodeBase to)
         {
-            _list.Remove(item);
+            Vector2 distance = (from.worldPosition - to.worldPosition).XZ();
+
+            int distanceX = Mathf.RoundToInt(Mathf.Abs(distance.x) / _gridManager.NodeSize);
+            int distanceY = Mathf.RoundToInt(Mathf.Abs(distance.y) / _gridManager.NodeSize);
+
+            const int diagonalCostCoefficient = 14;
+            const int straightCostCoefficient = 10;
+
+            return distanceX > distanceY ? diagonalCostCoefficient * distanceY + straightCostCoefficient * (distanceX - distanceY) : diagonalCostCoefficient * distanceX + straightCostCoefficient * (distanceY - distanceX);
         }
 
-        public T Peek()
+        private int GetAngleCost(NodeBase from, NodeBase to)
         {
-            return _list[0];
+            // if (from.pathParent == null)
+            // {
+            //     return 0;
+            // }
+
+            // Vector2 leadingDifference = (from.worldPosition - from.pathParent.worldPosition).XZ();
+            // Vector2 trailingDifference = (to.worldPosition - from.worldPosition).XZ();
+
+            // return Mathf.FloorToInt(MathF.Exp(angleChange * Vector2.Angle(leadingDifference, trailingDifference) * Mathf.Deg2Rad));
+            return 0;
         }
 
-        public T Pop()
+        private class MinHeap<T>
         {
-            T item = _list[0];
-            _list.RemoveAt(0);
-            return item;
-        }
+            private List<T> _list;
 
-        public void Clear()
-        {
-            _list.Clear();
+            public int Count => _list.Count;
+
+            public MinHeap()
+            {
+                _list = new List<T>();
+            }
+
+            public int Add(T item)
+            {
+                int index = _list.BinarySearch(item);
+                if (index < 0)
+                {
+                    index = ~index;
+                }
+                _list.Insert(index, item);
+                return index;
+            }
+
+            public bool Contains(T item)
+            {
+                return _list.Contains(item);
+            }
+
+            public void Remove(T item)
+            {
+                _list.Remove(item);
+            }
+
+            public T Peek()
+            {
+                return _list[0];
+            }
+
+            public T Pop()
+            {
+                T item = _list[0];
+                _list.RemoveAt(0);
+                return item;
+            }
+
+            public void Clear()
+            {
+                _list.Clear();
+            }
         }
     }
 }

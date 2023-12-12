@@ -1,4 +1,5 @@
 using UnityEngine;
+using UNV.Pathfinding;
 
 [RequireComponent(typeof(Rigidbody))]
 public class ShipController : MonoBehaviour
@@ -11,6 +12,8 @@ public class ShipController : MonoBehaviour
     [SerializeField] private float _steerPower = 500f;
     [SerializeField] private float _power = 5f;
     [SerializeField] private float _maxSpeed = 10f;
+
+    [SerializeField] private float _steerCoefficient = 1f;
 
     [SerializeField] private TargetOvershootOptions _onTargetOvershoot = TargetOvershootOptions.DoNothing;
 
@@ -26,35 +29,38 @@ public class ShipController : MonoBehaviour
     private Vector3 _currentWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypoints[_currentWaypointIndex] : transform.position;
 
     private Rigidbody _rigidbody;
+    private GridManager _gridManager;
 
     private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _gridManager = GridManager.Instance;
         ShipRadius = (transform.position - _motor.position).XZ().magnitude;
     }
 
     public void SetDestination(Vector3 destination)
     {
         _destination = destination;
-        CreateGrid();
+        DilateObstacles();
+        RequestPath();
     }
 
-    private void OnCollisionEnter(Collision other)
+    private void DilateObstacles()
     {
-        CreateGrid();
+        if (!_gridManager.DilatedBefore)
+        {
+            _gridManager.DilateObstacles(Mathf.FloorToInt(_obstacleAvoidanceDistance / _gridManager.NodeSize));
+        }
     }
 
-    private void CreateGrid()
+    private void RequestPath()
     {
-        PathGrid.CreateGrid();
-        PathGrid.DilateObstacles(Mathf.FloorToInt(_obstacleAvoidanceDistance / PathGrid.NodeSize));
         PathRequestManager.RequestPath(
             transform.position,
             _destination,
+            _steerCoefficient,
             OnPathFound,
-            () => transform.forward.XZ().normalized,
-            angle => angle < 75f * _steerPower / _maxSpeed ? Mathf.RoundToInt(angle / 3f) : int.MaxValue,
-            Mathf.CeilToInt((TurnMinRadius - _obstacleAvoidanceDistance) / PathGrid.NodeSize)
+            () => Util.UnitSquare(transform.forward.XZ())
         );
     }
 
@@ -164,8 +170,7 @@ public class ShipController : MonoBehaviour
         Gizmos.DrawSphere(_currentWaypoint, _targetDeadZone);
         foreach (Vector3 waypoint in _waypoints)
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireCube(waypoint, Vector3.one);
+            Gizmos.DrawCube(waypoint, _gridManager.NodeSize * Vector3.one);
         }
     }
 

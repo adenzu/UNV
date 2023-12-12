@@ -40,4 +40,43 @@ public static class Util
         }
         return relatives;
     }
+
+    public static Vector2 UnitSquare(Vector2 vector)
+    {
+        float angle = Mathf.Atan2(vector.y, vector.x) * Mathf.Rad2Deg;
+
+        Vector2[] possibleResults = {
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+            new(-1, 1),
+            new(-1, 0),
+            new(-1, -1),
+            new(0, -1),
+            new(1, -1)
+        };
+
+        const float halfQuadrant = 45f;
+
+        angle -= halfQuadrant / 2;
+
+        if (angle < 0)
+        {
+            angle += 360f;
+        }
+
+        int index = Mathf.RoundToInt(angle / halfQuadrant);
+
+        if (index >= possibleResults.Length)
+        {
+            index = 0;
+        }
+
+        return possibleResults[index];
+    }
+
+    public static Vector2 ToVector(float angle)
+    {
+        return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+    }
 }
