@@ -13,7 +13,7 @@ public static class PlaceholderAI
         Outputs outputs = new Outputs
         {
             thrust = distance < inputs.targetDeadZone ? 0 : 1,
-            steer = angle > 90f ? -1 : 1
+            steer = angle > 91f ? -1 : (angle < 91f ? 1 : 0)
         };
 
         return outputs;
@@ -22,7 +22,7 @@ public static class PlaceholderAI
     public struct Inputs
     {
         public float thrust;
-        public float steer;
+        public float rudderAngle;
         public Vector3 right;
         public Vector3 position;
         public Vector3 target;

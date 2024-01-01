@@ -129,7 +129,6 @@ namespace UNV.Pathfinding
             }
 
             yield return null;
-
             if (pathSuccess)
             {
                 waypoints = RetracePath(startNode, targetNode);
@@ -162,9 +161,7 @@ namespace UNV.Pathfinding
         private Vector3[] SimplifyPath(List<NodeBase> path)
         {
             List<Vector3> waypoints = new List<Vector3>();
-
             waypoints.Add(path[0].worldPosition);
-
             for (int i = 1; i < path.Count - 1; i++)
             {
                 Vector2 directionTo = _gridManager.GetDirection(path[i - 1], path[i]);
@@ -174,7 +171,6 @@ namespace UNV.Pathfinding
                     waypoints.Add(path[i].worldPosition);
                 }
             }
-
             waypoints.Add(path[path.Count - 1].worldPosition);
             return waypoints.ToArray();
         }

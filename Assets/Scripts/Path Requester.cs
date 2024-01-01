@@ -6,7 +6,7 @@ using UNV.Pathfinding;
 public class PathRequester : MonoBehaviour
 {
     public Transform seeker, target;
-    [Range(0, 360)] public float angleChangeOverDistance;
+    [Range(2, 20)] public float angleChangeOverDistance;
     private Vector3[] _path, _path1;
 
     private void Update()
