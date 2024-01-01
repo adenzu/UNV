@@ -19,15 +19,15 @@ namespace UNV.Path2D
         {
             for (int i = 0; i < _pathCreator.controlPoints.Length; i++)
             {
+                Vector3 controlPoint = _pathCreator.controlPoints[i];
                 EditorGUI.BeginChangeCheck();
-                Vector3 newPoint = Handles.PositionHandle(_pathCreator.controlPoints[i].XZ(), Quaternion.identity);
+                controlPoint = Handles.PositionHandle(controlPoint, Quaternion.identity);
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(_pathCreator, "Move Point");
-                    _pathCreator.controlPoints[i] = newPoint.XZ();
+                    _pathCreator.controlPoints[i] = controlPoint;
                 }
             }
         }
     }
 }
-

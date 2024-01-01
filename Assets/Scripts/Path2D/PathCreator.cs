@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UNV.Path;
 
 namespace UNV.Path2D
 {
     [ExecuteInEditMode]
     public class PathCreator : MonoBehaviour
     {
-        [SerializeField] public Vector2[] controlPoints;
+        [SerializeField] public Vector3[] controlPoints;
         [SerializeField, Range(1, 50)] private int _resolution = 4;
 
-        private int pathSegmentCount => _resolution * (controlPoints.Length - 1);
-        private Vector2[] _pathPoints;
+        private Vector3[] _pathPoints;
 
         [SerializeField] private Color _controlPointColor = Color.green;
         [SerializeField] private Color _pathColor = Color.red;
@@ -23,32 +23,32 @@ namespace UNV.Path2D
                 Gizmos.color = _controlPointColor;
                 for (int i = 0; i < controlPoints.Length; i++)
                 {
-                    Gizmos.DrawSphere(controlPoints[i].XZ(), 0.5f);
+                    Gizmos.DrawSphere(controlPoints[i], 0.5f);
                 }
 
                 DrawBezierCurve(controlPoints);
             }
         }
 
-        private void DrawBezierCurve(Vector2[] points)
+        private void DrawBezierCurve(Vector3[] points)
         {
+            if (_pathPoints == null) return;
             Gizmos.color = _pathColor;
-            _pathPoints = BezierCurve.GetBezierCurvePathPoints(points, pathSegmentCount);
             for (int i = 0; i < _pathPoints.Length - 1; i++)
             {
-                Gizmos.DrawLine(_pathPoints[i].XZ(), _pathPoints[i + 1].XZ());
+                Gizmos.DrawLine(_pathPoints[i], _pathPoints[i + 1]);
             }
+        }
+
+        [ContextMenu("Update Path")]
+        public void UpdatePath()
+        {
+            _pathPoints = PathProcessing.GetBezierPath(controlPoints, _resolution);
         }
 
         public Vector3[] GetPathPoints()
         {
-            Vector3[] pathPoints = new Vector3[pathSegmentCount + 1];
-            int i = 0;
-            foreach (Vector2 pathPoint in BezierCurve.GetBezierCurvePathPoints(controlPoints, pathSegmentCount))
-            {
-                pathPoints[i++] = pathPoint.XZ();
-            }
-            return pathPoints;
+            return _pathPoints;
         }
     }
 }
