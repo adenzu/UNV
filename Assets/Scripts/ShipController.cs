@@ -1,17 +1,22 @@
 using UnityEngine;
+using UNV.Path;
 using UNV.Pathfinding;
 
 [RequireComponent(typeof(Rigidbody))]
 public class ShipController : MonoBehaviour
 {
     [SerializeField] private float _obstacleAvoidanceDistance = 5f;
-    [SerializeField] private float _targetDeadZone = 0.1f;
+    [SerializeField] private float _targetDeadZoneRadius = 0.1f;
+
+    [SerializeField] private bool _useBezierPath = true;
+    [SerializeField] private int _bezierPathNumSamples = 10;
 
     [SerializeField] private Transform _motor;
 
     [SerializeField] private float _steerPower = 500f;
     [SerializeField] private float _power = 5f;
     [SerializeField] private float _maxSpeed = 10f;
+    [SerializeField] private float _angularSpeedScale = 0.01f;
 
     [SerializeField] private float _steerCoefficient = 1f;
 
@@ -21,12 +26,13 @@ public class ShipController : MonoBehaviour
     public float TurnMinRadius => ShipRadius * _maxSpeed / _steerPower;
 
     private float _thrust;
-    private float _steer;
+    private float _rudderAngle;
 
     private Vector3 _destination;
     private Vector3[] _waypoints;
-    private int _currentWaypointIndex;
+    private int _currentWaypointIndex, _previousWaypointIndex;
     private Vector3 _currentWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypoints[_currentWaypointIndex] : transform.position;
+    private Vector3 _previousWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypoints[_previousWaypointIndex] : transform.position;
 
     private Rigidbody _rigidbody;
     private GridManager _gridManager;
@@ -58,7 +64,7 @@ public class ShipController : MonoBehaviour
         PathRequestManager.RequestPath(
             transform.position,
             _destination,
-            _steerCoefficient,
+            _steerCoefficient * _steerPower / _maxSpeed,
             OnPathFound,
             () => Util.UnitSquare(transform.forward.XZ())
         );
@@ -66,17 +72,19 @@ public class ShipController : MonoBehaviour
 
     private void OnPathFound(Vector3[] path, bool success)
     {
-        _waypoints = success ? path : null;
+        _waypoints = success ? (_useBezierPath ? PathProcessing.GetBezierPath(path, _bezierPathNumSamples) : path) : null;
         _currentWaypointIndex = 0;
     }
 
     private bool IsTargetReached()
     {
-        return (_currentWaypoint - transform.position).magnitude < _targetDeadZone;
+        float distanceToTarget = (_currentWaypoint - transform.position).magnitude;
+        return distanceToTarget <= _targetDeadZoneRadius;
     }
 
     private void OnTargetReached()
     {
+        _previousWaypointIndex = _currentWaypointIndex;
         _currentWaypointIndex++;
         if (IsArrivedToDestination())
         {
@@ -113,18 +121,19 @@ public class ShipController : MonoBehaviour
     {
         _waypoints = null;
         _currentWaypointIndex = 0;
+        _previousWaypointIndex = 0;
     }
 
     private void FixedUpdate()
     {
-        if (IsArrivedToDestination())
-        {
-            return;
-        }
-
         if (IsTargetReached())
         {
             OnTargetReached();
+        }
+
+        if (IsArrivedToDestination())
+        {
+            return;
         }
 
         if (IsTargetOvershoot())
@@ -132,45 +141,46 @@ public class ShipController : MonoBehaviour
             OnTargetOvershoot();
         }
 
-        PlaceholderAI.Inputs inputs = new PlaceholderAI.Inputs
+        Vector3 waypointDirection = _currentWaypoint - _previousWaypoint;
+
+        if (_currentWaypointIndex == 0)
         {
-            thrust = _thrust,
-            steer = _steer,
-            right = transform.right,
-            position = transform.position,
-            target = _currentWaypoint,
-            targetDeadZone = _targetDeadZone
-        };
+            int nextWaypointIndex = _currentWaypointIndex + 1;
+            Vector3 nextWaypoint = nextWaypointIndex < _waypoints.Length ? _waypoints[nextWaypointIndex] : _currentWaypoint + (_currentWaypoint - _previousWaypoint);
+            waypointDirection = nextWaypoint - _currentWaypoint;
+        }
 
-        PlaceholderAI.Outputs outputs = PlaceholderAI.Predict(inputs);
+        _thrust = 1f;
+        _rudderAngle = FuzzyGuidanceController.GetCrispRudderAngle(
+            transform.position,
+            _currentWaypoint,
+            transform.forward,
+            waypointDirection
+        );
 
-        _thrust = outputs.thrust; //+= outputs.thrustJerk * Time.fixedDeltaTime;
-        _steer = outputs.steer; //+= outputs.steerJerk * Time.fixedDeltaTime;
+        Vector3 forward = Vector3.Scale(new Vector3(1, 0, 1), transform.forward).normalized;
 
-        _thrust = Mathf.Clamp(_thrust, -1f, 1f);
-        _steer = Mathf.Clamp(_steer, -1f, 1f);
+        Vector3 desiredForwardVelocity = forward * _maxSpeed * _thrust;
+        float desiredAngularSpeed = _rudderAngle * _maxSpeed * _thrust * _angularSpeedScale;
 
-        Vector3 forward = Vector3.Scale(new Vector3(1, 0, 1), transform.forward);
-
-        Vector3 thrustForce = forward * _maxSpeed * _thrust;
-        Vector3 steerForce = -_steer * transform.right * _steerPower;
-
-        _rigidbody.AddForceAtPosition(steerForce, _motor.position);
-        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, thrustForce, _power);
+        PhysicsHelper.ApplyAccelerationToReachAngularSpeed(_rigidbody, desiredAngularSpeed, _steerPower);
+        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, desiredForwardVelocity, _power);
     }
 
     private void OnDrawGizmos()
     {
+        Gizmos.DrawLine(transform.position, transform.position + Util.UnitSquare(transform.forward.XZ()).XZ() * 5f);
         if (IsArrivedToDestination())
         {
             return;
         }
 
         Gizmos.color = Color.green;
-        Gizmos.DrawSphere(_currentWaypoint, _targetDeadZone);
+        Gizmos.DrawSphere(_currentWaypoint, _targetDeadZoneRadius);
+        Gizmos.color = Color.red;
         foreach (Vector3 waypoint in _waypoints)
         {
-            Gizmos.DrawCube(waypoint, _gridManager.NodeSize * Vector3.one);
+            Gizmos.DrawSphere(waypoint, 1);
         }
     }
 
