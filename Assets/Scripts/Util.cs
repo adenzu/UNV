@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using UnityEngine;
+
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 public static class Util
 {
@@ -46,26 +50,26 @@ public static class Util
         float angle = Mathf.Atan2(vector.y, vector.x) * Mathf.Rad2Deg;
 
         Vector2[] possibleResults = {
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-            new(-1, 1),
-            new(-1, 0),
-            new(-1, -1),
-            new(0, -1),
-            new(1, -1)
+            new(1, 0),      // 22.5, -22.5
+            new(1, 1),      // 77.5, 22.5
+            new(0, 1),      // 112.5, 77.5
+            new(-1, 1),     // 157.5, 112.5
+            new(-1, 0),     // 202.5, 157.5
+            new(-1, -1),    // 247.5, 202.5
+            new(0, -1),     // 292.5, 247.5
+            new(1, -1)      // 337.5, 292.5
         };
 
         const float halfQuadrant = 45f;
 
-        angle -= halfQuadrant / 2;
+        angle += halfQuadrant / 2;
 
         if (angle < 0)
         {
             angle += 360f;
         }
 
-        int index = Mathf.RoundToInt(angle / halfQuadrant);
+        int index = Mathf.FloorToInt(angle / halfQuadrant);
 
         if (index >= possibleResults.Length)
         {
@@ -78,5 +82,19 @@ public static class Util
     public static Vector2 ToVector(float angle)
     {
         return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+    }
+
+    public static Vector2 TransformPoint(Vector2 point, Vector2 origin, Vector2 negativeYAxis)
+    {
+        const float NEGATIVE_Y_AXIS_ANGLE = 270f * Mathf.Deg2Rad;
+
+        Vector2 translatedPoint = point - origin;
+
+        float angle = Mathf.Atan2(negativeYAxis.y, negativeYAxis.x) - NEGATIVE_Y_AXIS_ANGLE;
+
+        return new Vector2(
+            translatedPoint.x * Mathf.Cos(angle) + translatedPoint.y * Mathf.Sin(angle),
+            -translatedPoint.x * Mathf.Sin(angle) + translatedPoint.y * Mathf.Cos(angle)
+        );
     }
 }
