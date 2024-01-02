@@ -4,19 +4,19 @@ using UnityEngine;
 
 public static class ExtensionMethods
 {
-    public static Vector3 YZ(this Vector2 vector)
+    public static Vector3 YZ(this Vector2 vector, float x = 0)
     {
-        return new Vector3(0, vector.x, vector.y);
+        return new Vector3(x, vector.x, vector.y);
     }
 
-    public static Vector3 XZ(this Vector2 vector)
+    public static Vector3 XZ(this Vector2 vector, float y = 0)
     {
-        return new Vector3(vector.x, 0, vector.y);
+        return new Vector3(vector.x, y, vector.y);
     }
 
-    public static Vector3 XY(this Vector2 vector)
+    public static Vector3 XY(this Vector2 vector, float z = 0)
     {
-        return new Vector3(vector.x, vector.y, 0);
+        return new Vector3(vector.x, vector.y, z);
     }
 
     public static Vector2 YZ(this Vector3 vector)
@@ -57,5 +57,10 @@ public static class ExtensionMethods
     public static Vector3 ZYX(this Vector3 vector)
     {
         return new Vector3(vector.z, vector.y, vector.x);
+    }
+
+    public static float Angle(this Vector2 vector)
+    {
+        return Mathf.Atan2(vector.y, vector.x) * Mathf.Rad2Deg;
     }
 }
