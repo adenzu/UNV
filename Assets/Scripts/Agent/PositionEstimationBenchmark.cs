@@ -7,7 +7,7 @@ public class PositionEstimationBenchmark : MonoBehaviour
     [SerializeField] private float _averageError;
     [SerializeField] private float _averageErrorRelativeToRadius;
     [SerializeField] private MovingObstacleDataSignalEmitter[] _movingObstacleDataSignalEmitters;
-    [SerializeField] private MovingObstacleDataEstimator _movingObstacleDataHandler;
+    [SerializeField] private MovingObstaclePositionEstimator _movingObstaclePositionEstimator;
     [SerializeField] private float _interval = 1f;
 
     private float _timer = 0f;
@@ -30,7 +30,7 @@ public class PositionEstimationBenchmark : MonoBehaviour
         int count = 0;
         foreach (MovingObstacleDataSignalEmitter emitter in _movingObstacleDataSignalEmitters)
         {
-            MovingObstacleData data = _movingObstacleDataHandler.GetEstimatedData(emitter.Id);
+            MovingObstacleData data = _movingObstaclePositionEstimator.GetEstimatedData(emitter.Id);
             sum += Vector3.Distance(emitter.transform.position, data.position);
             count++;
         }
@@ -43,7 +43,7 @@ public class PositionEstimationBenchmark : MonoBehaviour
         int count = 0;
         foreach (MovingObstacleDataSignalEmitter emitter in _movingObstacleDataSignalEmitters)
         {
-            MovingObstacleData data = _movingObstacleDataHandler.GetEstimatedData(emitter.Id);
+            MovingObstacleData data = _movingObstaclePositionEstimator.GetEstimatedData(emitter.Id);
             sum += Vector3.Distance(emitter.transform.position, data.position) / emitter.Radius;
             count++;
         }
