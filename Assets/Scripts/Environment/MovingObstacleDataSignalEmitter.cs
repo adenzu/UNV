@@ -13,6 +13,14 @@ public class MovingObstacleDataSignalEmitter : MonoBehaviour
 
     private float _timer = 0f;
 
+    private void Start()
+    {
+        if (_movingObstacleDataSignalReceiver == null)
+        {
+            _movingObstacleDataSignalReceiver = FindObjectOfType<MovingObstacleDataSignalReceiver>();
+        }
+    }
+
     private void Update()
     {
         _timer -= Time.deltaTime;

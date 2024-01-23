@@ -164,6 +164,58 @@ namespace UNV.Pathfinding
                 yield return node;
             }
         }
+
+        public void Clear()
+        {
+            foreach (NodeBase node in _grid)
+            {
+                node.angleRange = 0;
+                node.costFromStart = 0;
+                node.costToTarget = 0;
+            }
+        }
+
+        public bool IsClearPath(Vector3 from, Vector3 to)
+        {
+            float verticalDistance = to.z - from.z;
+            float horizontalDistance = to.x - from.x;
+
+            float originX = from.x;
+            float originY = from.z;
+
+            float delta = _nodeSize / 2;
+
+            if (horizontalDistance == 0)
+            {
+                int iterations = Mathf.RoundToInt(verticalDistance / delta);
+
+                for (int i = 0; i < iterations; i++)
+                {
+                    float y = originY + delta * i;
+                    if (!GetAt(new Vector3(originX, 0, y)).walkable)
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                float slope = verticalDistance / horizontalDistance;
+                int iterations = Mathf.RoundToInt(horizontalDistance / delta);
+
+                for (int i = 0; i < iterations; i++)
+                {
+                    float x = originX + delta * i;
+                    float y = slope * x + originY;
+                    if (!GetAt(new Vector3(x, 0, y)).walkable)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
     }
 }
 

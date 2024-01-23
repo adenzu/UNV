@@ -97,4 +97,18 @@ public static class Util
             -translatedPoint.x * Mathf.Sin(angle) + translatedPoint.y * Mathf.Cos(angle)
         );
     }
+
+    public static Vector3 GetIntersectionPoint(Vector3 offset1, Vector3 direction1, Vector3 offset2, Vector3 direction2)
+    {
+        Vector3 cross = Vector3.Cross(direction1, direction2);
+        Vector3 cross2 = Vector3.Cross(offset2 - offset1, direction2);
+        float planarFactor = Vector3.Dot(offset1 - offset2, cross) / cross.sqrMagnitude;
+        float s = Vector3.Dot(cross2, cross) / cross.sqrMagnitude;
+        return offset1 + direction1 * (planarFactor + s);
+    }
+
+    public static float GetLinesDistance(Vector2 from1, Vector2 to1, Vector2 from2, Vector2 to2)
+    {
+        return 0;
+    }
 }

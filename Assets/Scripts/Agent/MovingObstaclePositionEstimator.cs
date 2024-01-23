@@ -10,13 +10,18 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
 {
     [SerializeField] private MovingObstacleDataSignalReceiver _movingObstacleDataSignalReceiver;
     [SerializeField] private int _dataSequenceLength = 3;
+    [SerializeField] private bool _showGizmos = false;
+
+    public PositionDirectionRadius[] MovingObstacles => GetEstimated();
 
     private Dictionary<int, MovingObstacleDataSequence> _data = new();
     private Dictionary<int, MovingObstacleData> _estimatedData = new();
+    private Dictionary<int, PositionDirectionRadius> _estimated = new();
+    private Dictionary<int, double[]> _estimatedPathParameters = new();
     private Dictionary<int, Func<float, Vector3>> _estimatedPathFunctions = new();
     private Dictionary<int, float> _estimatedPathFunctionErrors = new();
 
-    private double[] _initialGuess = new double[] { 0, 0, 0 };
+    private double[] _initialGuess = new double[] { 0, 0, 0 }; // speed, angular speed, initial angle
     private double[] _lowerBound = new double[] { 0, -50, -Mathf.PI };
     private double[] _upperBound = new double[] { 100, 50, Mathf.PI };
 
@@ -33,28 +38,59 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
         }
     }
 
-    public MovingObstacleData GetEstimatedData(int id)
+    public PositionDirectionRadius[] GetEstimatedWithout(Transform transform)
     {
-        _estimatedData.TryGetValue(id, out MovingObstacleData data);
-        return data;
+        List<PositionDirectionRadius> estimated = new List<PositionDirectionRadius>(_estimated.Values);
+        if (_estimated.ContainsKey(transform.GetInstanceID()))
+        {
+            estimated.Remove(_estimated[transform.GetInstanceID()]);
+        }
+        return estimated.ToArray();
+    }
+
+    public PositionDirectionRadius[] GetEstimated()
+    {
+        return new List<PositionDirectionRadius>(_estimated.Values).ToArray();
+    }
+
+    public PositionDirectionRadius GetEstimated(int id)
+    {
+        return _estimated[id];
+    }
+
+    public PositionDirectionRadius GetEstimated(Transform transform)
+    {
+        return _estimated[transform.GetInstanceID()];
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.gray;
-        foreach (MovingObstacleDataSequence data in _data.Values)
+        if (!_showGizmos)
         {
-            foreach (MovingObstacleDataWithTime currentData in data.data)
-            {
-                Gizmos.DrawSphere(currentData.data.position, currentData.data.radius * 0.5f);
-            }
+            return;
         }
 
         Gizmos.color = Color.green;
-        foreach (MovingObstacleData data in _estimatedData.Values)
+
+        foreach (PositionDirectionRadius data in _estimated.Values)
         {
-            Gizmos.DrawWireSphere(data.position, data.radius);
+            Gizmos.DrawLine(data.position, data.position + data.velocity * 5);
         }
+
+        // Gizmos.color = Color.gray;
+        // foreach (MovingObstacleDataSequence data in _data.Values)
+        // {
+        //     foreach (MovingObstacleDataWithTime currentData in data.data)
+        //     {
+        //         Gizmos.DrawSphere(currentData.data.position, currentData.data.radius * 0.5f);
+        //     }
+        // }
+
+        // Gizmos.color = Color.green;
+        // foreach (MovingObstacleData data in _estimatedData.Values)
+        // {
+        //     Gizmos.DrawWireSphere(data.position, data.radius);
+        // }
     }
 
     private Vector3 EstimatePosition(int id, float time)
@@ -88,31 +124,61 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
     private void UpdatePathFunction(int id)
     {
         _data.TryGetValue(id, out MovingObstacleDataSequence dataSequence);
-        if (dataSequence.Length < 3)
+
+        const int NUMBER_OF_NECESSARY_POSITIONS_FOR_NON_LINEAR_PATH_DERIVATION = 3;
+
+        if (dataSequence.Length < NUMBER_OF_NECESSARY_POSITIONS_FOR_NON_LINEAR_PATH_DERIVATION)
         {
             _estimatedPathFunctions[id] = t => SimplePathFunction(t, dataSequence);
             _estimatedPathFunctionErrors[id] = (float)PathObjectiveFunction(_estimatedPathFunctions[id], dataSequence);
             return;
         }
-        var optimizer = new BfgsBMinimizer(1e-5, 1e-5, 1e-5);
-        // var lowerBound = new DenseVector(_lowerBound);
-        // var upperBound = new DenseVector(_upperBound);
+
         var initialGuess = new DenseVector(_initialGuess);
         var objective = ObjectiveFunction.Value(x => PathObjectiveFunction(x, dataSequence));
-        // var objectiveWithGradient = new MathNet.Numerics.Optimization.ObjectiveFunctions.ForwardDifferenceGradientObjectiveFunction(objective, lowerBound, upperBound);
-        // var result = optimizer.FindMinimum(objectiveWithGradient, lowerBound, upperBound, initialGuess);
         var result = NelderMeadSimplex.Minimum(objective, initialGuess);
+        var resultArray = result.MinimizingPoint.ToArray();
+
+        const int SPEED_INDEX = 0;
+        const int ANGULAR_SPEED_INDEX = 1;
+        const int INITIAL_ANGLE_INDEX = 2;
+        double estimatedSpeed = resultArray[SPEED_INDEX];
+        double estimatedAngularSpeed = resultArray[ANGULAR_SPEED_INDEX];
+        double estimatedInitialAngle = resultArray[INITIAL_ANGLE_INDEX];
+
+        for (int i = 2; i > 0; i--)
+        {
+            if
+            (
+                estimatedSpeed < _lowerBound[SPEED_INDEX] ||
+                estimatedSpeed > _upperBound[SPEED_INDEX] ||
+                estimatedAngularSpeed < _lowerBound[ANGULAR_SPEED_INDEX] ||
+                estimatedAngularSpeed > _upperBound[ANGULAR_SPEED_INDEX] ||
+                estimatedInitialAngle < _lowerBound[INITIAL_ANGLE_INDEX] ||
+                estimatedInitialAngle > _upperBound[INITIAL_ANGLE_INDEX]
+            )
+            {
+                result = NelderMeadSimplex.Minimum(objective, initialGuess);
+            }
+            else
+            {
+                break;
+            }
+        }
+
         var newPathFunction = GetPathFunction(result.MinimizingPoint.ToArray(), dataSequence.GetOldestData());
 
         if (!_estimatedPathFunctions.ContainsKey(id))
         {
             _estimatedPathFunctions.Add(id, newPathFunction);
             _estimatedPathFunctionErrors.Add(id, (float)result.FunctionInfoAtMinimum.Value);
+            _estimatedPathParameters.Add(id, result.MinimizingPoint.ToArray());
         }
         else if (PathObjectiveFunction(result.MinimizingPoint, dataSequence) < PathObjectiveFunction(_estimatedPathFunctions[id], dataSequence))
         {
             _estimatedPathFunctions[id] = newPathFunction;
             _estimatedPathFunctionErrors[id] = (float)result.FunctionInfoAtMinimum.Value;
+            _estimatedPathParameters[id] = result.MinimizingPoint.ToArray();
         }
     }
 
@@ -136,6 +202,12 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
                 position = currentData.data.position,
                 radius = currentData.data.radius,
             });
+            _estimated.Add(id, new PositionDirectionRadius
+            {
+                position = currentData.data.position,
+                velocity = Vector3.zero,
+                radius = currentData.data.radius,
+            });
         }
         else
         {
@@ -144,6 +216,13 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
             updatedData.position = EstimatePosition(id, time);
             updatedData.radius = _estimatedPathFunctionErrors[id] + currentData.radius;
             _estimatedData[id] = updatedData;
+            float deltaTime = 0.1f;
+            _estimated[id] = new PositionDirectionRadius
+            {
+                position = updatedData.position,
+                velocity = (updatedData.position - EstimatePosition(id, time - deltaTime)) / deltaTime,
+                radius = updatedData.radius,
+            };
         }
     }
 
@@ -216,11 +295,11 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
             else
             {
                 Vector3 direction = new Vector3(
-                    Mathf.Sin(initialAngle) - Mathf.Sin(initialAngle + angularSpeed * t),
+                    Mathf.Sin(initialAngle + angularSpeed * t) - Mathf.Sin(initialAngle),
                     0,
-                    Mathf.Cos(initialAngle + angularSpeed * t) - Mathf.Cos(initialAngle)
+                    Mathf.Cos(initialAngle) - Mathf.Cos(initialAngle + angularSpeed * t)
                 );
-                position = -(speed / angularSpeed) * direction;
+                position = (speed / angularSpeed) * direction;
             }
 
             return position + relativePosition;
@@ -281,5 +360,12 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
     {
         public MovingObstacleData data;
         public float time;
+    }
+
+    public struct PositionDirectionRadius
+    {
+        public Vector3 position;
+        public Vector3 velocity;
+        public float radius;
     }
 }

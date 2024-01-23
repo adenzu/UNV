@@ -72,7 +72,7 @@ namespace UNV.Path2D
 
         public void UpdatePath()
         {
-            SetPath(pathCreator.GetPathPoints());
+            SetPath(pathCreator.Waypoints.ToArray());
         }
 
         public void SetPath(Vector3[] pathPoints)
@@ -94,7 +94,7 @@ namespace UNV.Path2D
 
         private void OnDrawGizmosSelected()
         {
-            Vector3[] pathPoints = pathCreator.GetPathPoints();
+            Vector3[] pathPoints = pathCreator.Waypoints.ToArray();
             if (pathPoints != null)
             {
                 Gizmos.color = Color.red;

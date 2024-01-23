@@ -28,9 +28,9 @@ public class PositionEstimationBenchmark : MonoBehaviour
     {
         float sum = 0f;
         int count = 0;
-        foreach (MovingObstacleDataSignalEmitter emitter in _movingObstacleDataSignalEmitters)
+        foreach (var emitter in _movingObstacleDataSignalEmitters)
         {
-            MovingObstacleData data = _movingObstaclePositionEstimator.GetEstimatedData(emitter.Id);
+            var data = _movingObstaclePositionEstimator.GetEstimated(emitter.Id);
             sum += Vector3.Distance(emitter.transform.position, data.position);
             count++;
         }
@@ -41,9 +41,9 @@ public class PositionEstimationBenchmark : MonoBehaviour
     {
         float sum = 0f;
         int count = 0;
-        foreach (MovingObstacleDataSignalEmitter emitter in _movingObstacleDataSignalEmitters)
+        foreach (var emitter in _movingObstacleDataSignalEmitters)
         {
-            MovingObstacleData data = _movingObstaclePositionEstimator.GetEstimatedData(emitter.Id);
+            var data = _movingObstaclePositionEstimator.GetEstimated(emitter.Id);
             sum += Vector3.Distance(emitter.transform.position, data.position) / emitter.Radius;
             count++;
         }

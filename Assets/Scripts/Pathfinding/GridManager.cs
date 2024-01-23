@@ -55,6 +55,31 @@ namespace UNV.Pathfinding
             SetGridType(_gridType);
             SetGridValues();
             GenerateGrid();
+            SetupBorders();
+        }
+
+        private void SetupBorders()
+        {
+            if (transform.childCount != 4)
+            {
+                return;
+            }
+
+            Transform side = transform.GetChild(0);
+            side.localScale = new Vector3(_gridWorldSize.x, 1, _nodeSize);
+            side.localPosition = new Vector3(0, 0, _gridWorldSize.y / 2 + _nodeSize / 2);
+
+            side = transform.GetChild(1);
+            side.localScale = new Vector3(_gridWorldSize.x, 1, _nodeSize);
+            side.localPosition = new Vector3(0, 0, -_gridWorldSize.y / 2 - _nodeSize / 2);
+
+            side = transform.GetChild(2);
+            side.localScale = new Vector3(_nodeSize, 1, _gridWorldSize.y);
+            side.localPosition = new Vector3(_gridWorldSize.x / 2 + _nodeSize / 2, 0, 0);
+
+            side = transform.GetChild(3);
+            side.localScale = new Vector3(_nodeSize, 1, _gridWorldSize.y);
+            side.localPosition = new Vector3(-_gridWorldSize.x / 2 - _nodeSize / 2, 0, 0);
         }
 
         private void OnValidate()
@@ -167,6 +192,16 @@ namespace UNV.Pathfinding
         public IEnumerable<NodeBase> GetNodes()
         {
             throw new System.NotImplementedException();
+        }
+
+        public void Clear()
+        {
+            _grid.Clear();
+        }
+
+        public bool IsClearPath(Vector3 from, Vector3 to)
+        {
+            return _grid.IsClearPath(from, to);
         }
 
         public enum GridType

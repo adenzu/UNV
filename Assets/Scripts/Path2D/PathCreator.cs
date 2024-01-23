@@ -8,47 +8,45 @@ namespace UNV.Path2D
     [ExecuteInEditMode]
     public class PathCreator : MonoBehaviour
     {
-        [SerializeField] public Vector3[] controlPoints;
-        [SerializeField, Range(1, 50)] private int _resolution = 4;
-
-        private Vector3[] _pathPoints;
+        [SerializeField] private List<Vector3> _waypoints = new();
 
         [SerializeField] private Color _controlPointColor = Color.green;
-        [SerializeField] private Color _pathColor = Color.red;
 
-        private void OnDrawGizmosSelected()
+        public List<Vector3> Waypoints => _waypoints;
+
+        public Vector3 AddWaypoint(Vector3 waypoint)
         {
-            if (controlPoints.Length >= 4)
+            _waypoints.Add(waypoint);
+            return waypoint;
+        }
+
+        public Vector3 RemoveWaypoint(Vector3 waypoint)
+        {
+            _waypoints.Remove(waypoint);
+            return waypoint;
+        }
+
+        public Vector3 RemoveWaypoint(int index)
+        {
+            Vector3 waypoint = _waypoints[index];
+            _waypoints.RemoveAt(index);
+            return waypoint;
+        }
+
+        public Vector3 RemoveWaypoint()
+        {
+            if (_waypoints.Count > 0)
             {
-                Gizmos.color = _controlPointColor;
-                for (int i = 0; i < controlPoints.Length; i++)
-                {
-                    Gizmos.DrawSphere(controlPoints[i], 0.5f);
-                }
-
-                DrawBezierCurve(controlPoints);
+                Vector3 waypoint = _waypoints[_waypoints.Count - 1];
+                _waypoints.RemoveAt(_waypoints.Count - 1);
+                return waypoint;
             }
+            return Vector3.zero;
         }
 
-        private void DrawBezierCurve(Vector3[] points)
+        public void ClearWaypoints()
         {
-            if (_pathPoints == null) return;
-            Gizmos.color = _pathColor;
-            for (int i = 0; i < _pathPoints.Length - 1; i++)
-            {
-                Gizmos.DrawLine(_pathPoints[i], _pathPoints[i + 1]);
-            }
-        }
-
-        [ContextMenu("Update Path")]
-        public void UpdatePath()
-        {
-            _pathPoints = PathProcessing.GetBezierPath(controlPoints, _resolution);
-        }
-
-        public Vector3[] GetPathPoints()
-        {
-            return _pathPoints;
+            _waypoints.Clear();
         }
     }
 }

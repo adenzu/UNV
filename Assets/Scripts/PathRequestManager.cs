@@ -9,7 +9,7 @@ public class PathRequestManager : MonoBehaviour
 
     public static bool IsProcessingPath => Instance._isProcessingPath;
 
-    private Queue<PathRequest> _pathRequestQueue;
+    private Queue<PathRequest> _pathRequestQueue = new Queue<PathRequest>();
     private PathRequest _currentPathRequest;
 
     private bool _isProcessingPath;
@@ -24,11 +24,6 @@ public class PathRequestManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-    }
-
-    private void Start()
-    {
-        _pathRequestQueue = new Queue<PathRequest>();
     }
 
     public static void RequestPath(

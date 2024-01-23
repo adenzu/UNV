@@ -17,15 +17,16 @@ namespace UNV.Path2D
 
         private void OnSceneGUI()
         {
-            for (int i = 0; i < _pathCreator.controlPoints.Length; i++)
+            for (int i = 0; i < _pathCreator.Waypoints.Count; i++)
             {
-                Vector3 controlPoint = _pathCreator.controlPoints[i];
+                Vector3 waypoint = _pathCreator.Waypoints[i];
                 EditorGUI.BeginChangeCheck();
-                controlPoint = Handles.PositionHandle(controlPoint, Quaternion.identity);
+                waypoint = Handles.PositionHandle(waypoint, Quaternion.identity);
+                Handles.Label(waypoint, $"Control Point {i}");
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(_pathCreator, "Move Point");
-                    _pathCreator.controlPoints[i] = controlPoint;
+                    _pathCreator.Waypoints[i] = waypoint;
                 }
             }
         }

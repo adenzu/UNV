@@ -12,10 +12,8 @@ namespace UNV.Pathfinding
         public static Pathfinding Instance { get; private set; }
 
         public delegate Vector2 GetDefaultDirectionDelegate();
-        // public delegate int AngleCostFunctionDelegate(float angle);
 
         public static GetDefaultDirectionDelegate GetDefaultDirection;
-        // public static AngleCostFunctionDelegate AngleCostFunction;
         public static float angleChangeOverDistance;
 
         private GridManager _gridManager;
@@ -54,15 +52,14 @@ namespace UNV.Pathfinding
 
             if (targetNode.walkable)
             {
-                HashSet<NodeBase> visitedNodes = new HashSet<NodeBase>();
-                MinHeap<NodeBase> nodesToVisit = new MinHeap<NodeBase>();
+                HashSet<NodeBase> visitedNodes = new();
+                MinHeap<NodeBase> nodesToVisit = new();
                 nodesToVisit.Add(startNode);
 
                 void AddNeighbourToNodesToVisit(NodeBase node, NodeBase neighbour, int newCostToNeighbour)
                 {
                     Vector3 nodePosition = node.worldPosition;
                     Vector3 neighbourPosition = neighbour.worldPosition;
-
                     Vector2 nodeDifference = node.pathParent == null ? GetDefaultDirection.Invoke() : (nodePosition - node.pathParent.worldPosition).XZ();
                     Vector2 neighbourDifference = (neighbourPosition - nodePosition).XZ();
 
@@ -107,7 +104,7 @@ namespace UNV.Pathfinding
                         if (
                             !neighbour.walkable ||
                             visitedNodes.Contains(neighbour) ||
-                            !CanTurnInTime(node, neighbour)
+                            (neighbour != targetNode && !CanTurnInTime(node, neighbour))
                         )
                         {
                             continue;
@@ -160,7 +157,7 @@ namespace UNV.Pathfinding
 
         private Vector3[] SimplifyPath(List<NodeBase> path)
         {
-            List<Vector3> waypoints = new List<Vector3>();
+            List<Vector3> waypoints = new();
             waypoints.Add(path[0].worldPosition);
             for (int i = 1; i < path.Count - 1; i++)
             {
@@ -197,15 +194,6 @@ namespace UNV.Pathfinding
 
         private int GetAngleCost(NodeBase from, NodeBase to)
         {
-            // if (from.pathParent == null)
-            // {
-            //     return 0;
-            // }
-
-            // Vector2 leadingDifference = (from.worldPosition - from.pathParent.worldPosition).XZ();
-            // Vector2 trailingDifference = (to.worldPosition - from.worldPosition).XZ();
-
-            // return Mathf.FloorToInt(MathF.Exp(angleChange * Vector2.Angle(leadingDifference, trailingDifference) * Mathf.Deg2Rad));
             return 0;
         }
 

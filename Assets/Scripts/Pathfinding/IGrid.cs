@@ -32,6 +32,10 @@ namespace UNV.Pathfinding
 
         public void SetShow(bool show);
 
+        public void Clear();
+
+        public bool IsClearPath(Vector3 from, Vector3 to);
+
         public IEnumerable<NodeBase> GetNodes();
     }
 }
