@@ -70,27 +70,27 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
             return;
         }
 
-        Gizmos.color = Color.green;
+        // Gizmos.color = Color.green;
 
-        foreach (PositionDirectionRadius data in _estimated.Values)
+        // foreach (PositionDirectionRadius data in _estimated.Values)
+        // {
+        //     Gizmos.DrawLine(data.position, data.position + data.velocity * 5);
+        // }
+
+        Gizmos.color = Color.gray;
+        foreach (MovingObstacleDataSequence data in _data.Values)
         {
-            Gizmos.DrawLine(data.position, data.position + data.velocity * 5);
+            foreach (MovingObstacleDataWithTime currentData in data.data)
+            {
+                Gizmos.DrawSphere(currentData.data.position, currentData.data.radius * 0.5f);
+            }
         }
 
-        // Gizmos.color = Color.gray;
-        // foreach (MovingObstacleDataSequence data in _data.Values)
-        // {
-        //     foreach (MovingObstacleDataWithTime currentData in data.data)
-        //     {
-        //         Gizmos.DrawSphere(currentData.data.position, currentData.data.radius * 0.5f);
-        //     }
-        // }
-
-        // Gizmos.color = Color.green;
-        // foreach (MovingObstacleData data in _estimatedData.Values)
-        // {
-        //     Gizmos.DrawWireSphere(data.position, data.radius);
-        // }
+        Gizmos.color = Color.green;
+        foreach (MovingObstacleData data in _estimatedData.Values)
+        {
+            Gizmos.DrawWireSphere(data.position, data.radius);
+        }
     }
 
     private Vector3 EstimatePosition(int id, float time)

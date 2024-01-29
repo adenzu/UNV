@@ -255,11 +255,11 @@ public class BoatController : MonoBehaviour
 
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(_currentWaypoint, _targetDeadZoneRadius);
-        Gizmos.color = new Color(transform.GetInstanceID() % 255 / 255f, (transform.GetInstanceID() * 1453f) % 255 / 255f, (transform.GetInstanceID() * 571f) % 255 / 255f);
-        for (int i = 0; i < _waypoints.Length; i++)
-        {
-            Gizmos.DrawSphere(_waypoints[i], _targetDeadZoneRadius * 0.5f);
-        }
+        // Gizmos.color = new Color(transform.GetInstanceID() % 255 / 255f, (transform.GetInstanceID() * 1453f) % 255 / 255f, (transform.GetInstanceID() * 571f) % 255 / 255f);
+        // for (int i = 0; i < _waypoints.Length; i++)
+        // {
+        //     Gizmos.DrawSphere(_waypoints[i], _targetDeadZoneRadius * 0.5f);
+        // }
     }
 
     private bool ShouldWaitForPassage()

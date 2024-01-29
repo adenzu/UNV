@@ -264,7 +264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _movingObstaclePositionEstimator: {fileID: 0}
-  _detectionRadius: 25
+  _detectionRadius: 40
   _avoidanceRadius: 6
   _cooldown: 0.1
 --- !u!1 &65291456372064447

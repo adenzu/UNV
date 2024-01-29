@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 4538.778, g: 2945.594, b: 2264.2034, a: 1}
+  m_IndirectSpecularColor: {r: 4608.353, g: 2944.6917, b: 2168.5784, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1401,7 +1401,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 301f2e025626ae24ea0f3ad634f8e7be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _objectToSpawn: {fileID: 3947385697052495638, guid: 8e3164e56c2db3543b64f29012f9b9c9, type: 3}
+  _objectToSpawn: {fileID: 3565422695494830584, guid: fa0a418d6b142c84781747853dd729f7, type: 3}
   _numberOfObjectsToSpawn: 0
   _externalRadius: 0
   _internalRadius: 0
