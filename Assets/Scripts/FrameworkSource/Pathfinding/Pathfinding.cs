@@ -9,35 +9,19 @@ namespace UNV.Pathfinding
 {
     public class Pathfinding : MonoBehaviour
     {
-        public static Pathfinding Instance { get; private set; }
+        [SerializeField] private PathRequestManager pathRequestManager;
+        [SerializeField] private GridManager gridManager;
+
+
+        public float angleChangeOverDistance;
 
         public delegate Vector2 GetDefaultDirectionDelegate();
+        public GetDefaultDirectionDelegate GetDefaultDirection;
 
-        public static GetDefaultDirectionDelegate GetDefaultDirection;
-        public static float angleChangeOverDistance;
 
-        private GridManager _gridManager;
-
-        private void Awake()
+        public void StartFindingPath(Vector3 startPosition, Vector3 targetPosition)
         {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
-
-        private void Start()
-        {
-            _gridManager = GridManager.Instance;
-        }
-
-        public static void StartFindingPath(Vector3 startPosition, Vector3 targetPosition)
-        {
-            Instance.StartCoroutine(Instance.FindPath(startPosition, targetPosition));
+            StartCoroutine(FindPath(startPosition, targetPosition));
         }
 
         private IEnumerator FindPath(Vector3 startPosition, Vector3 targetPosition)
@@ -45,8 +29,8 @@ namespace UNV.Pathfinding
             Vector3[] waypoints = new Vector3[0];
             bool pathSuccess = false;
 
-            NodeBase startNode = _gridManager.GetAt(startPosition);
-            NodeBase targetNode = _gridManager.GetAt(targetPosition);
+            NodeBase startNode = gridManager.GetAt(startPosition);
+            NodeBase targetNode = gridManager.GetAt(targetPosition);
 
             startNode.angleRange = 2 * angleChangeOverDistance;
 
@@ -99,7 +83,7 @@ namespace UNV.Pathfinding
                         break;
                     }
 
-                    foreach (NodeBase neighbour in _gridManager.GetNeighbours(node))
+                    foreach (NodeBase neighbour in gridManager.GetNeighbours(node))
                     {
                         if (
                             !neighbour.walkable ||
@@ -131,7 +115,7 @@ namespace UNV.Pathfinding
                 waypoints = RetracePath(startNode, targetNode);
             }
 
-            PathRequestManager.OnPathProcessFinish(waypoints, pathSuccess);
+            pathRequestManager.OnPathProcessFinish(waypoints, pathSuccess);
         }
 
         private Vector3[] RetracePath(NodeBase startNode, NodeBase endNode, bool simplify = true)
@@ -161,8 +145,8 @@ namespace UNV.Pathfinding
             waypoints.Add(path[0].worldPosition);
             for (int i = 1; i < path.Count - 1; i++)
             {
-                Vector2 directionTo = _gridManager.GetDirection(path[i - 1], path[i]);
-                Vector2 directionFrom = _gridManager.GetDirection(path[i], path[i + 1]);
+                Vector2 directionTo = gridManager.GetDirection(path[i - 1], path[i]);
+                Vector2 directionFrom = gridManager.GetDirection(path[i], path[i + 1]);
                 if (Vector2.Angle(directionTo, directionFrom) > angleChangeOverDistance)
                 {
                     waypoints.Add(path[i].worldPosition);
@@ -183,8 +167,8 @@ namespace UNV.Pathfinding
         {
             Vector2 distance = (from.worldPosition - to.worldPosition).XZ();
 
-            int distanceX = Mathf.RoundToInt(Mathf.Abs(distance.x) / _gridManager.NodeSize);
-            int distanceY = Mathf.RoundToInt(Mathf.Abs(distance.y) / _gridManager.NodeSize);
+            int distanceX = Mathf.RoundToInt(Mathf.Abs(distance.x) / gridManager.NodeSize);
+            int distanceY = Mathf.RoundToInt(Mathf.Abs(distance.y) / gridManager.NodeSize);
 
             const int diagonalCostCoefficient = 14;
             const int straightCostCoefficient = 10;

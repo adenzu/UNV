@@ -6,73 +6,76 @@ using UNV.Pathfinding;
 [RequireComponent(typeof(Rigidbody))]
 public class BoatController : MonoBehaviour
 {
-    [SerializeField] private float _obstacleAvoidanceDistance = 5f;
-    [SerializeField] private float _targetDeadZoneRadius = 0.1f;
+    [SerializeField] private GridManager gridManager;
+    [SerializeField] private PathRequestManager pathRequestManager;
 
-    [SerializeField] private bool _useBezierPath = true;
-    [SerializeField] private int _bezierPathNumSamples = 10;
+    [SerializeField] private float obstacleAvoidanceDistance = 5f;
+    [SerializeField] private float targetDeadZoneRadius = 0.1f;
 
-    [SerializeField] private float _steerPower = 500f;
-    [SerializeField] private float _power = 5f;
-    [SerializeField] private float _maxSpeed = 10f;
-    [SerializeField] private float _angularSpeedScale = 0.01f;
+    [SerializeField] private bool useBezierPath = true;
+    [SerializeField] private int bezierPathSampleCount = 10;
 
-    [SerializeField] private float _steerCoefficient = 1f;
+    [SerializeField] private float steerPower = 500f;
+    [SerializeField] private float power = 5f;
+    [SerializeField] private float maxSpeed = 10f;
+    [SerializeField] private float angularSpeedScale = 0.01f;
 
-    [SerializeField] private TargetOvershootOptions _onTargetOvershoot = TargetOvershootOptions.DoNothing;
+    [SerializeField] private float steerCoefficient = 1f;
 
-    [SerializeField] private ColregDetector _colregDetector;
+    [SerializeField] private TargetOvershootOptions onTargetOvershoot = TargetOvershootOptions.DoNothing;
+
+    [SerializeField] private ColregDetector colregDetector;
 
     public delegate void OnArrivalToDestinationDelegate();
     public OnArrivalToDestinationDelegate OnArrivalToDestinationHook;
 
-    private float _thrust;
-    private float _rudderAngle;
+    private float thrust;
+    private float rudderAngle;
 
-    private Vector3 _destination;
-    private Vector3[] _waypoints;
-    private int _currentWaypointIndex, _previousWaypointIndex;
-    private Vector3 _currentWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypointAdjuster(_waypoints[_currentWaypointIndex]) : transform.position;
-    private Vector3 _previousWaypoint => _waypoints != null && _waypoints.Length > 0 ? _waypoints[_previousWaypointIndex] : transform.position;
+    private Vector3 destination;
+    private Vector3[] waypoints;
+    private int currentWaypointIndex, previousWaypointIndex;
+    private Vector3 currentWaypoint => waypoints != null && waypoints.Length > 0 ? waypointAdjuster(waypoints[currentWaypointIndex]) : transform.position;
+    private Vector3 previousWaypoint => waypoints != null && waypoints.Length > 0 ? waypoints[previousWaypointIndex] : transform.position;
 
-    public Vector3 CurrentWaypoint => _currentWaypoint;
+    public Vector3 CurrentWaypoint => currentWaypoint;
 
-    private Func<Vector3, Vector3> _waypointAdjuster = (waypoint) => waypoint;
-    private Func<Vector3, Vector3> _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+    private Func<Vector3, Vector3> waypointAdjuster = (waypoint) => waypoint;
+    private Func<Vector3, Vector3> waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
 
     private Rigidbody _rigidbody;
 
     private void Start()
     {
         _rigidbody = GetComponent<Rigidbody>();
-        if (_colregDetector != null)
+        if (colregDetector != null)
         {
-            _colregDetector.OnColregStateChange += OnColregStateChange;
+            colregDetector.OnColregStateChange += OnColregStateChange;
         }
     }
 
     public void SetDestination(Vector3 destination)
     {
-        _destination = destination;
-        GridManager.Instance.GenerateGrid();
+        this.destination = destination;
+        gridManager.GenerateGrid();
         DilateObstacles();
         RequestPath();
     }
 
     private void DilateObstacles()
     {
-        if (!GridManager.Instance.DilatedBefore)
+        if (!gridManager.DilatedBefore)
         {
-            GridManager.Instance.DilateObstacles(Mathf.FloorToInt(_obstacleAvoidanceDistance / GridManager.Instance.NodeSize));
+            gridManager.DilateObstacles(Mathf.FloorToInt(obstacleAvoidanceDistance / gridManager.NodeSize));
         }
     }
 
     private void RequestPath()
     {
-        PathRequestManager.RequestPath(
+        pathRequestManager.RequestPath(
             transform.position,
-            _destination,
-            _steerCoefficient * _steerPower / _maxSpeed,
+            destination,
+            steerCoefficient * steerPower / maxSpeed,
             OnPathFound,
             () => Util.UnitSquare(transform.forward.XZ())
         );
@@ -82,42 +85,42 @@ public class BoatController : MonoBehaviour
     {
         if (!success)
         {
-            GridManager.Instance.GenerateGrid();
+            gridManager.GenerateGrid();
             DilateObstacles();
             Invoke(nameof(RequestPath), 1f);
         }
-        _waypoints = success ? (_useBezierPath ? PathProcessing.GetBezierPath(path, _bezierPathNumSamples) : path) : null;
-        _currentWaypointIndex = 0;
+        waypoints = success ? (useBezierPath ? PathProcessing.GetBezierPath(path, bezierPathSampleCount) : path) : null;
+        currentWaypointIndex = 0;
     }
 
     private bool IsTargetReached()
     {
-        float distanceToTarget = (_currentWaypoint - transform.position).magnitude;
-        return distanceToTarget <= _targetDeadZoneRadius;
+        float distanceToTarget = (currentWaypoint - transform.position).magnitude;
+        return distanceToTarget <= targetDeadZoneRadius;
     }
 
     private void OnTargetReached()
     {
         if
         (
-            _colregDetector.State == ColregDetector.ColregState.None ||
-            _colregDetector.State == ColregDetector.ColregState.CrossingFromLeft
+            colregDetector.State == ColregDetector.ColregState.None ||
+            colregDetector.State == ColregDetector.ColregState.CrossingFromLeft
         )
         {
-            _previousWaypointIndex = _currentWaypointIndex;
-            _currentWaypointIndex++;
+            previousWaypointIndex = currentWaypointIndex;
+            currentWaypointIndex++;
         }
         else
         {
             while
             (
-                (_currentWaypointIndex < _waypoints.Length - 1) &&
-                (Vector3.Dot(transform.forward, _waypoints[_currentWaypointIndex] - transform.position) < 0) &&
-                ((_waypoints[_currentWaypointIndex] - transform.position).magnitude < _colregDetector.DetectionRadius)
+                (currentWaypointIndex < waypoints.Length - 1) &&
+                (Vector3.Dot(transform.forward, waypoints[currentWaypointIndex] - transform.position) < 0) &&
+                ((waypoints[currentWaypointIndex] - transform.position).magnitude < colregDetector.DetectionRadius)
             )
             {
-                _previousWaypointIndex = _currentWaypointIndex;
-                _currentWaypointIndex++;
+                previousWaypointIndex = currentWaypointIndex;
+                currentWaypointIndex++;
             }
         }
         OnColregStateChange(ColregDetector.ColregState.None);
@@ -129,11 +132,11 @@ public class BoatController : MonoBehaviour
 
     private bool IsTargetOvershoot()
     {
-        if (Vector3.Distance(transform.position, _currentWaypoint) > _obstacleAvoidanceDistance * 1.5f)
+        if (Vector3.Distance(transform.position, currentWaypoint) > obstacleAvoidanceDistance * 1.5f)
         {
             return false;
         }
-        Vector2 targetDirection = (_currentWaypoint - transform.position).XZ().normalized;
+        Vector2 targetDirection = (currentWaypoint - transform.position).XZ().normalized;
         Vector2 forward = transform.forward.XZ().normalized;
         float targetAngle = Vector2.Angle(targetDirection, forward);
         return targetAngle > 90f;
@@ -141,7 +144,7 @@ public class BoatController : MonoBehaviour
 
     public void OnTargetOvershoot()
     {
-        if (_onTargetOvershoot == TargetOvershootOptions.Skip)
+        if (onTargetOvershoot == TargetOvershootOptions.Skip)
         {
             OnTargetReached();
         }
@@ -149,20 +152,20 @@ public class BoatController : MonoBehaviour
 
     private bool IsArrivedToDestination()
     {
-        return _waypoints == null || _currentWaypointIndex >= _waypoints.Length;
+        return waypoints == null || currentWaypointIndex >= waypoints.Length;
     }
 
     private void OnArrivalToDestination()
     {
-        _waypoints = null;
-        _currentWaypointIndex = 0;
-        _previousWaypointIndex = 0;
+        waypoints = null;
+        currentWaypointIndex = 0;
+        previousWaypointIndex = 0;
         OnArrivalToDestinationHook?.Invoke();
     }
 
     private void FixedUpdate()
     {
-        if (_waypoints == null || _waypoints.Length == 0)
+        if (waypoints == null || waypoints.Length == 0)
         {
             return;
         }
@@ -172,30 +175,30 @@ public class BoatController : MonoBehaviour
             return;
         }
 
-        Vector3 waypointDirection = _currentWaypoint - _previousWaypoint;
+        Vector3 waypointDirection = currentWaypoint - previousWaypoint;
 
-        if (_currentWaypointIndex == 0)
+        if (currentWaypointIndex == 0)
         {
-            int nextWaypointIndex = _currentWaypointIndex + 1;
-            Vector3 nextWaypoint = nextWaypointIndex < _waypoints.Length ? _waypoints[nextWaypointIndex] : _currentWaypoint + (_currentWaypoint - _previousWaypoint);
-            waypointDirection = nextWaypoint - _currentWaypoint;
+            int nextWaypointIndex = currentWaypointIndex + 1;
+            Vector3 nextWaypoint = nextWaypointIndex < waypoints.Length ? waypoints[nextWaypointIndex] : currentWaypoint + (currentWaypoint - previousWaypoint);
+            waypointDirection = nextWaypoint - currentWaypoint;
         }
 
-        _thrust = 1f;
-        _rudderAngle = FuzzyGuidanceController.GetCrispRudderAngle(
+        thrust = 1f;
+        rudderAngle = FuzzyGuidanceController.GetCrispRudderAngle(
             transform.position,
-            _currentWaypoint,
+            currentWaypoint,
             transform.forward,
-            _waypointDirectionAdjuster(waypointDirection)
+            waypointDirectionAdjuster(waypointDirection)
         );
 
         Vector3 forward = Vector3.Scale(new Vector3(1, 0, 1), transform.forward).normalized;
 
-        Vector3 desiredForwardVelocity = forward * _maxSpeed * _thrust;
-        float desiredAngularSpeed = _rudderAngle * _maxSpeed * _thrust * _angularSpeedScale;
+        Vector3 desiredForwardVelocity = forward * maxSpeed * thrust;
+        float desiredAngularSpeed = rudderAngle * maxSpeed * thrust * angularSpeedScale;
 
-        PhysicsHelper.ApplyAccelerationToReachAngularSpeed(_rigidbody, desiredAngularSpeed, _steerPower);
-        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, desiredForwardVelocity, _power);
+        PhysicsHelper.ApplyAccelerationToReachAngularSpeed(_rigidbody, desiredAngularSpeed, steerPower);
+        PhysicsHelper.ApplyForceToReachVelocity(_rigidbody, desiredForwardVelocity, power);
 
         if (IsTargetReached())
         {
@@ -219,28 +222,28 @@ public class BoatController : MonoBehaviour
         switch (state)
         {
             case ColregDetector.ColregState.HeadOn:
-                offset = (_colregDetector.TargetPosition + transform.position) / 2 + transform.right * (_obstacleAvoidanceDistance + _colregDetector.TargetRadius);
-                _waypointAdjuster = (waypoint) => offset;
-                _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+                offset = (colregDetector.TargetPosition + transform.position) / 2 + transform.right * (obstacleAvoidanceDistance + colregDetector.TargetRadius);
+                waypointAdjuster = (waypoint) => offset;
+                waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
                 break;
             case ColregDetector.ColregState.Overtaking:
-                float rightDistance = Vector3.Dot(transform.right, _colregDetector.TargetPosition - transform.position);
-                offset = (Mathf.Sign(-rightDistance) * transform.right + transform.forward) * (_obstacleAvoidanceDistance + _colregDetector.TargetRadius);
-                _waypointAdjuster = (waypoint) => _colregDetector.TargetPosition + offset;
-                _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+                float rightDistance = Vector3.Dot(transform.right, colregDetector.TargetPosition - transform.position);
+                offset = (Mathf.Sign(-rightDistance) * transform.right + transform.forward) * (obstacleAvoidanceDistance + colregDetector.TargetRadius);
+                waypointAdjuster = (waypoint) => colregDetector.TargetPosition + offset;
+                waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
                 break;
             case ColregDetector.ColregState.CrossingFromRight:
-                offset = _colregDetector.TargetPosition;
-                _waypointAdjuster = (waypoint) => offset;
-                _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+                offset = colregDetector.TargetPosition;
+                waypointAdjuster = (waypoint) => offset;
+                waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
                 break;
             case ColregDetector.ColregState.CrossingFromLeft:
-                _waypointAdjuster = (waypoint) => waypoint;
-                _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+                waypointAdjuster = (waypoint) => waypoint;
+                waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
                 break;
             default:
-                _waypointAdjuster = (waypoint) => waypoint;
-                _waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
+                waypointAdjuster = (waypoint) => waypoint;
+                waypointDirectionAdjuster = (waypointDirection) => waypointDirection;
                 break;
         }
     }
@@ -254,7 +257,7 @@ public class BoatController : MonoBehaviour
         }
 
         Gizmos.color = Color.green;
-        Gizmos.DrawSphere(_currentWaypoint, _targetDeadZoneRadius);
+        Gizmos.DrawSphere(currentWaypoint, targetDeadZoneRadius);
         // Gizmos.color = new Color(transform.GetInstanceID() % 255 / 255f, (transform.GetInstanceID() * 1453f) % 255 / 255f, (transform.GetInstanceID() * 571f) % 255 / 255f);
         // for (int i = 0; i < _waypoints.Length; i++)
         // {
@@ -264,12 +267,12 @@ public class BoatController : MonoBehaviour
 
     private bool ShouldWaitForPassage()
     {
-        if (_colregDetector.State == ColregDetector.ColregState.None)
+        if (colregDetector.State == ColregDetector.ColregState.None)
         {
             return false;
         }
 
-        bool isPathClear = GridManager.Instance.IsClearPath(transform.position, _currentWaypoint);
+        bool isPathClear = gridManager.IsClearPath(transform.position, currentWaypoint);
 
         return !isPathClear;
     }

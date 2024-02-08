@@ -6,53 +6,39 @@ namespace UNV.Pathfinding
 {
     public class GridManager : MonoBehaviour, IGrid
     {
-        public static GridManager Instance { get; private set; }
+        [SerializeField] private LayerMask obstacleMask;
+        [SerializeField] private Vector2 gridWorldSize;
+        [SerializeField, Min(0.01f)] private float nodeSize;
 
-        [SerializeField] private LayerMask _obstacleMask;
-        [SerializeField] private Vector2 _gridWorldSize;
-        [SerializeField, Min(0.01f)] private float _nodeSize;
+        [SerializeField] private bool showGrid = false;
 
-        [SerializeField] private bool _showGrid = false;
+        [SerializeField] private GridType gridType = GridType.SquareTiling;
 
-        [SerializeField] private GridType _gridType = GridType.SquareTiling;
+        private GridType previousGridType = GridType.SquareTiling;
 
-        private GridType _previousGridType = GridType.SquareTiling;
+        private IGrid grid = new SquareTilingGrid();
 
-        private IGrid _grid = new SquareTilingGrid();
+        public int Width => grid.Width;
 
-        public int Width => _grid.Width;
+        public int Height => grid.Height;
 
-        public int Height => _grid.Height;
+        public float NodeSize => grid.NodeSize;
 
-        public float NodeSize => _grid.NodeSize;
-
-        public int NodeCount => _grid.NodeCount;
+        public int NodeCount => grid.NodeCount;
 
         public bool DilatedBefore { get; private set; } = false;
 
         [ContextMenu("Regenerate Grid")]
         private void RegenerateGrid()
         {
-            SetGridType(_gridType);
+            SetGridType(gridType);
             SetGridValues();
             GenerateGrid();
         }
 
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
-
         private void Start()
         {
-            SetGridType(_gridType);
+            SetGridType(gridType);
             SetGridValues();
             GenerateGrid();
             SetupBorders();
@@ -66,27 +52,27 @@ namespace UNV.Pathfinding
             }
 
             Transform side = transform.GetChild(0);
-            side.localScale = new Vector3(_gridWorldSize.x, 1, _nodeSize);
-            side.localPosition = new Vector3(0, 0, _gridWorldSize.y / 2 + _nodeSize / 2);
+            side.localScale = new Vector3(gridWorldSize.x, 1, nodeSize);
+            side.localPosition = new Vector3(0, 0, gridWorldSize.y / 2 + nodeSize / 2);
 
             side = transform.GetChild(1);
-            side.localScale = new Vector3(_gridWorldSize.x, 1, _nodeSize);
-            side.localPosition = new Vector3(0, 0, -_gridWorldSize.y / 2 - _nodeSize / 2);
+            side.localScale = new Vector3(gridWorldSize.x, 1, nodeSize);
+            side.localPosition = new Vector3(0, 0, -gridWorldSize.y / 2 - nodeSize / 2);
 
             side = transform.GetChild(2);
-            side.localScale = new Vector3(_nodeSize, 1, _gridWorldSize.y);
-            side.localPosition = new Vector3(_gridWorldSize.x / 2 + _nodeSize / 2, 0, 0);
+            side.localScale = new Vector3(nodeSize, 1, gridWorldSize.y);
+            side.localPosition = new Vector3(gridWorldSize.x / 2 + nodeSize / 2, 0, 0);
 
             side = transform.GetChild(3);
-            side.localScale = new Vector3(_nodeSize, 1, _gridWorldSize.y);
-            side.localPosition = new Vector3(-_gridWorldSize.x / 2 - _nodeSize / 2, 0, 0);
+            side.localScale = new Vector3(nodeSize, 1, gridWorldSize.y);
+            side.localPosition = new Vector3(-gridWorldSize.x / 2 - nodeSize / 2, 0, 0);
         }
 
         private void OnValidate()
         {
-            if (_gridType != _previousGridType)
+            if (gridType != previousGridType)
             {
-                SetGridType(_gridType);
+                SetGridType(gridType);
                 SetGridValues();
                 GenerateGrid();
             }
@@ -101,33 +87,33 @@ namespace UNV.Pathfinding
             switch (gridType)
             {
                 case GridType.SquareTiling:
-                    _grid = new SquareTilingGrid();
+                    grid = new SquareTilingGrid();
                     break;
                 case GridType.QuadTree:
                     // _grid = new QuadTreeGrid();
                     break;
             }
-            _previousGridType = _gridType;
-            _gridType = gridType;
+            previousGridType = this.gridType;
+            this.gridType = gridType;
         }
 
         private void SetGridValues()
         {
-            _grid.SetObstacleMask(_obstacleMask);
-            _grid.SetGridWorldSize(_gridWorldSize);
-            _grid.SetNodeSize(_nodeSize);
-            _grid.SetShow(_showGrid);
+            grid.SetObstacleMask(obstacleMask);
+            grid.SetGridWorldSize(gridWorldSize);
+            grid.SetNodeSize(nodeSize);
+            grid.SetShow(showGrid);
         }
 
         private void OnDrawGizmos()
         {
-            Gizmos.DrawWireCube(transform.position, _gridWorldSize.XZ(1));
-            if (_showGrid)
+            Gizmos.DrawWireCube(transform.position, gridWorldSize.XZ(1));
+            if (showGrid)
             {
-                foreach (NodeBase node in _grid.GetNodes())
+                foreach (NodeBase node in grid.GetNodes())
                 {
                     Gizmos.color = node.walkable ? Color.white : Color.red;
-                    Gizmos.DrawCube(node.worldPosition, Vector3.one * (_nodeSize - .1f));
+                    Gizmos.DrawCube(node.worldPosition, Vector3.one * (nodeSize - .1f));
                 }
             }
         }
@@ -139,54 +125,54 @@ namespace UNV.Pathfinding
 
         public void GenerateGrid(Vector3 origin)
         {
-            _grid.GenerateGrid(origin);
+            grid.GenerateGrid(origin);
             DilatedBefore = false;
         }
 
         public List<NodeBase> GetNeighbours(NodeBase pathfindingNode)
         {
-            return _grid.GetNeighbours(pathfindingNode);
+            return grid.GetNeighbours(pathfindingNode);
         }
 
         public NodeBase GetAt(Vector3 worldPosition)
         {
-            return _grid.GetAt(worldPosition);
+            return grid.GetAt(worldPosition);
         }
 
         public Vector2 GetDirection(NodeBase from, NodeBase to)
         {
-            return _grid.GetDirection(from, to);
+            return grid.GetDirection(from, to);
         }
 
         public void DilateObstacles(int radius)
         {
-            _grid.DilateObstacles(radius);
+            grid.DilateObstacles(radius);
             DilatedBefore = true;
         }
 
         public void EdgeObstacles(int radius)
         {
-            _grid.EdgeObstacles(radius);
+            grid.EdgeObstacles(radius);
         }
 
         public void SetObstacleMask(LayerMask obstacleMask)
         {
-            _grid.SetObstacleMask(obstacleMask);
+            grid.SetObstacleMask(obstacleMask);
         }
 
         public void SetGridWorldSize(Vector2 gridWorldSize)
         {
-            _grid.SetGridWorldSize(gridWorldSize);
+            grid.SetGridWorldSize(gridWorldSize);
         }
 
         public void SetNodeSize(float nodeSize)
         {
-            _grid.SetNodeSize(nodeSize);
+            grid.SetNodeSize(nodeSize);
         }
 
         public void SetShow(bool show)
         {
-            _grid.SetShow(show);
+            grid.SetShow(show);
         }
 
         public IEnumerable<NodeBase> GetNodes()
@@ -196,12 +182,12 @@ namespace UNV.Pathfinding
 
         public void Clear()
         {
-            _grid.Clear();
+            grid.Clear();
         }
 
         public bool IsClearPath(Vector3 from, Vector3 to)
         {
-            return _grid.IsClearPath(from, to);
+            return grid.IsClearPath(from, to);
         }
 
         public enum GridType

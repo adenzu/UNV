@@ -5,28 +5,15 @@ using UNV.Pathfinding;
 
 public class PathRequestManager : MonoBehaviour
 {
-    public static PathRequestManager Instance { get; private set; }
+    [SerializeField] private Pathfinding pathfinding;
 
-    public static bool IsProcessingPath => Instance._isProcessingPath;
+    public bool IsProcessingPath => isProcessingPath;
+    private bool isProcessingPath;
 
-    private Queue<PathRequest> _pathRequestQueue = new Queue<PathRequest>();
-    private PathRequest _currentPathRequest;
+    private readonly Queue<PathRequest> pathRequestQueue = new();
+    private PathRequest currentPathRequest;
 
-    private bool _isProcessingPath;
-
-    private void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    public static void RequestPath(
+    public void RequestPath(
         Vector3 pathStart,
         Vector3 pathEnd,
         float angleChange,
@@ -34,27 +21,27 @@ public class PathRequestManager : MonoBehaviour
         Pathfinding.GetDefaultDirectionDelegate getDefaultDirection
     )
     {
-        PathRequest newRequest = new PathRequest(pathStart, pathEnd, angleChange, callback, getDefaultDirection);
-        Instance._pathRequestQueue.Enqueue(newRequest);
-        Instance.TryProcessNext();
+        PathRequest newRequest = new(pathStart, pathEnd, angleChange, callback, getDefaultDirection);
+        pathRequestQueue.Enqueue(newRequest);
+        TryProcessNext();
     }
 
-    public static void OnPathProcessFinish(Vector3[] path, bool success)
+    public void OnPathProcessFinish(Vector3[] path, bool success)
     {
-        Instance._currentPathRequest.callback(path, success);
-        Instance._isProcessingPath = false;
-        Instance.TryProcessNext();
+        currentPathRequest.callback(path, success);
+        isProcessingPath = false;
+        TryProcessNext();
     }
 
     private void TryProcessNext()
     {
-        if (!_isProcessingPath && _pathRequestQueue.Count > 0)
+        if (!isProcessingPath && pathRequestQueue.Count > 0)
         {
-            _currentPathRequest = _pathRequestQueue.Dequeue();
-            _isProcessingPath = true;
-            Pathfinding.GetDefaultDirection = _currentPathRequest.getDefaultDirection;
-            Pathfinding.angleChangeOverDistance = _currentPathRequest.angleChange;
-            Pathfinding.StartFindingPath(_currentPathRequest.start, _currentPathRequest.end);
+            currentPathRequest = pathRequestQueue.Dequeue();
+            isProcessingPath = true;
+            pathfinding.GetDefaultDirection = currentPathRequest.getDefaultDirection;
+            pathfinding.angleChangeOverDistance = currentPathRequest.angleChange;
+            pathfinding.StartFindingPath(currentPathRequest.start, currentPathRequest.end);
         }
     }
 
