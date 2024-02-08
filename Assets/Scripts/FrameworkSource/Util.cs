@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using UnityEditor;
 using UnityEngine;
 
 using Vector2 = UnityEngine.Vector2;
@@ -110,5 +112,27 @@ public static class Util
     public static float GetLinesDistance(Vector2 from1, Vector2 to1, Vector2 from2, Vector2 to2)
     {
         return 0;
+    }
+
+    public static bool HandleMonoScriptFieldClassInheritance(MonoScript monoScript, Type parentClass, string fieldName)
+    {
+        if (monoScript == null)
+        {
+            Debug.LogError($"{fieldName} script is not assigned.");
+        }
+        else if (monoScript.GetClass() == null)
+        {
+            Debug.LogError($"{fieldName} script is not a class.");
+        }
+        else if (!monoScript.GetClass().GetInterfaces().Contains(parentClass))
+        {
+            Debug.LogError($"{fieldName} script is not a subclass of {parentClass.Name}.");
+        }
+        else
+        {
+            Debug.Log($"{fieldName} script is valid.");
+            return true;
+        }
+        return false;
     }
 }

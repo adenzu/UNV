@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 4593.0903, g: 2949.4006, b: 2196.9143, a: 1}
+  m_IndirectSpecularColor: {r: 4593.0903, g: 2949.4084, b: 2196.9143, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -361,7 +361,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: SetMaxSizeScale
         m_Mode: 0
@@ -470,7 +470,7 @@ RectTransform:
   - {fileID: 688609274}
   - {fileID: 988105669}
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -899,7 +899,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 12
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &427821086
 GameObject:
@@ -1212,7 +1212,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &563694580
 GameObject:
@@ -1371,57 +1371,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &670943602
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 670943604}
-  - component: {fileID: 670943603}
-  m_Layer: 0
-  m_Name: FloatingObstacleSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &670943603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 670943602}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 301f2e025626ae24ea0f3ad634f8e7be, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _objectToSpawn: {fileID: 3565422695494830584, guid: fa0a418d6b142c84781747853dd729f7, type: 3}
-  _numberOfObjectsToSpawn: 0
-  _externalRadius: 0
-  _internalRadius: 0
-  _randomizeSize: 1
-  _minSizeScale: 0.01
-  _maxSizeScale: 0.01
---- !u!4 &670943604
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 670943602}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &688609273
 GameObject:
@@ -2154,7 +2103,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: SetObjectCount
         m_Mode: 0
@@ -2471,7 +2420,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -80, y: 15}
+  m_AnchoredPosition: {x: -80, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &988105670
@@ -2652,7 +2601,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: RespawnObjects
         m_Mode: 1
@@ -2736,7 +2685,7 @@ Transform:
   - {fileID: 1255779376}
   - {fileID: 872433273}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1132609979
 MonoBehaviour:
@@ -3058,7 +3007,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1294589598
 GameObject:
@@ -3163,7 +3112,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: SetMinSizeScale
         m_Mode: 0
@@ -3464,7 +3413,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1376992371
 GameObject:
@@ -3569,7 +3518,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: SetExternalRadius
         m_Mode: 0
@@ -3581,7 +3530,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 670943603}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: ObjectSpawner, Assembly-CSharp
         m_MethodName: RearrangeObjects
         m_Mode: 1
@@ -3624,7 +3573,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1401639555
 MonoBehaviour:
@@ -3650,9 +3599,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a9d1034e9d18345b26dcefa992b2cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _movingObstacleDataSignalReceiver: {fileID: 1401639555}
-  _dataSequenceLength: 3
-  _showGizmos: 1
+  pathFunctionSolverScript: {fileID: 11500000, guid: e0344649619db8a4ea932505ab68557e, type: 3}
+  savedDataSequenceLength: 3
+  useSimplePathFunctionWhenDataLessThan: 3
+  showGizmos: 0
 --- !u!1 &1487401843
 GameObject:
   m_ObjectHideFlags: 0
@@ -3847,7 +3797,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1548575244
 MonoBehaviour:
