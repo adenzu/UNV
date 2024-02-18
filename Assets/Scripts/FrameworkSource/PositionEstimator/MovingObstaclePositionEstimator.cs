@@ -42,7 +42,11 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
     {
         if (pathFunctionSolverScript != null)
         {
+<<<<<<< Updated upstream
             pathFunctionSolver = (IPathFunctionSolver)pathFunctionSolverScript.GetClass().GetConstructor(new Type[] { }).Invoke(new object[] { });
+=======
+            pathFunctionSolver = Util.InstantiateMonoScriptObject<IPathFunctionSolver>(pathFunctionSolverScript);
+>>>>>>> Stashed changes
         }
         movingObstacleDataSignalReceiver = GetComponent<MovingObstacleDataSignalReceiver>();
     }
@@ -57,6 +61,10 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
         foreach (int id in data.Keys)
         {
             UpdateEstimatedData(id, Time.time);
+<<<<<<< Updated upstream
+=======
+            Debug.Log(id);
+>>>>>>> Stashed changes
         }
     }
 
@@ -70,6 +78,19 @@ public class MovingObstaclePositionEstimator : MonoBehaviour
         return estimated.ToArray();
     }
 
+<<<<<<< Updated upstream
+=======
+    public PositionDirectionRadius[] GetEstimatedWithout(int id)
+    {
+        List<PositionDirectionRadius> estimated = new List<PositionDirectionRadius>(this.estimated.Values);
+        if (this.estimated.ContainsKey(id))
+        {
+            estimated.Remove(this.estimated[id]);
+        }
+        return estimated.ToArray();
+    }
+
+>>>>>>> Stashed changes
     public PositionDirectionRadius[] GetEstimated()
     {
         return new List<PositionDirectionRadius>(estimated.Values).ToArray();

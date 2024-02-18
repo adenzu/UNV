@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 543cec2d39bd3e44fac50a65f81fd5b3
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - tilingManager: {instanceID: 0}
+  - pathRequestManager: {instanceID: 0}
+  - boatInformation: {fileID: 11400000, guid: 0558936d73614b0459d89ac228580f75, type: 2}
+  - colregDetector: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

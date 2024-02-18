@@ -114,7 +114,18 @@ public static class Util
         return 0;
     }
 
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Util.cs
     public static bool HandleMonoScriptFieldClassInheritance(MonoScript monoScript, Type parentClass, string fieldName)
+=======
+    /// <summary>
+    /// Checks if a MonoScript field is a subclass of a specified parent class.
+    /// </summary>
+    /// <param name="monoScript">The MonoScript to check.</param>
+    /// <param name="parentClass">The parent class to compare against.</param>
+    /// <param name="fieldName">The name of the field being checked.</param>
+    /// <returns>True if the MonoScript is a subclass of the parent class, false otherwise.</returns>
+    public static bool HandleMonoScriptFieldClassInheritance(MonoScript monoScript, Type parentClass, string fieldName, bool logIfValid = false)
+>>>>>>> Stashed changes:Assets/Scripts/Util.cs
     {
         if (monoScript == null)
         {
@@ -124,15 +135,46 @@ public static class Util
         {
             Debug.LogError($"{fieldName} script is not a class.");
         }
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Util.cs
         else if (!monoScript.GetClass().GetInterfaces().Contains(parentClass))
+=======
+        else if (monoScript.GetClass().IsInterface)
+        {
+            Debug.LogError($"{fieldName} script is an interface.");
+        }
+        else if (monoScript.GetClass().IsAbstract)
+        {
+            Debug.LogError($"{fieldName} script is abstract.");
+        }
+        else if (!parentClass.IsAssignableFrom(monoScript.GetClass()))
+>>>>>>> Stashed changes:Assets/Scripts/Util.cs
         {
             Debug.LogError($"{fieldName} script is not a subclass of {parentClass.Name}.");
         }
         else
         {
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Util.cs
             Debug.Log($"{fieldName} script is valid.");
+=======
+            if (logIfValid)
+            {
+                Debug.Log($"{fieldName} script is valid.");
+            }
+>>>>>>> Stashed changes:Assets/Scripts/Util.cs
             return true;
         }
         return false;
     }
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Util.cs
+=======
+
+    public static T InstantiateMonoScriptObject<T>(MonoScript monoScript) where T : class
+    {
+        if (monoScript == null)
+        {
+            return null;
+        }
+        return (T)monoScript.GetClass().GetConstructor(new Type[] { }).Invoke(new object[] { });
+    }
+>>>>>>> Stashed changes:Assets/Scripts/Util.cs
 }

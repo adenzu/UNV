@@ -5,69 +5,69 @@ using UnityEngine;
 
 namespace UNV.Pathfinding
 {
-    public class SquareTilingGrid : IGrid
+    public class GridWithRotation : ITiling
     {
-        private LayerMask _obstacleMask;
-        private Vector2 _gridWorldSize;
-        private float _nodeSize;
+        private LayerMask obstacleMask;
+        private Vector2 gridWorldSize;
+        private float nodeSize;
 
-        private int _width, _height;
-        private SquareTilingNode[,] _grid = new SquareTilingNode[0, 0];
+        private int width, height;
+        private GridNodeWithRotation[,] grid = new GridNodeWithRotation[0, 0];
 
-        private int _neighbourRadius = 1;
+        private int neighbourRadius = 1;
 
-        private bool _showGrid = false;
+        private bool showGrid = false;
 
-        public int Width => _width;
+        public int Width => width;
 
-        public int Height => _height;
+        public int Height => height;
 
-        public float NodeSize => _nodeSize;
+        public float NodeSize => nodeSize;
 
-        public int NodeCount => _grid.Length;
+        public int NodeCount => grid.Length;
 
-        public void GenerateGrid(Vector3 origin)
+        public void GenerateTiling(Vector3 origin)
         {
-            _width = Mathf.RoundToInt(_gridWorldSize.x / _nodeSize);
-            _height = Mathf.RoundToInt(_gridWorldSize.y / _nodeSize);
+            width = Mathf.RoundToInt(gridWorldSize.x / nodeSize);
+            height = Mathf.RoundToInt(gridWorldSize.y / nodeSize);
 
-            _grid = new SquareTilingNode[_width, _height];
+            grid = new GridNodeWithRotation[width, height];
 
-            Vector3 worldBottomLeft = origin - Vector3.right * _gridWorldSize.x / 2 - Vector3.forward * _gridWorldSize.y / 2;
+            Vector3 worldBottomLeft = origin - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
 
-            float halfNodeSize = _nodeSize / 2;
-            for (int x = 0; x < _width; x++)
+            float halfNodeSize = nodeSize / 2;
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < _height; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * _nodeSize + halfNodeSize) + Vector3.forward * (y * _nodeSize + halfNodeSize);
-                    bool walkable = !Physics.CheckSphere(worldPoint, halfNodeSize, _obstacleMask);
-                    _grid[x, y] = new SquareTilingNode(walkable, worldPoint, x, y);
+                    Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeSize + halfNodeSize) + Vector3.forward * (y * nodeSize + halfNodeSize);
+                    bool walkable = !Physics.CheckSphere(worldPoint, halfNodeSize, obstacleMask);
+                    grid[x, y] = new GridNodeWithRotation(walkable, worldPoint, x, y);
                 }
             }
         }
 
         public List<NodeBase> GetNeighbours(NodeBase pathNode)
         {
-            SquareTilingNode _pathNode = (SquareTilingNode)pathNode;
+            GridNodeWithRotation _pathNode = (GridNodeWithRotation)pathNode;
 
-            int neighbourDiameter = 2 * _neighbourRadius + 1;
+            int neighbourDiameter = 2 * neighbourRadius + 1;
             int neighbourCount = neighbourDiameter * neighbourDiameter - 1;
             List<NodeBase> neighbours = new(neighbourCount);
 
-            foreach (Tuple<int, int> neighbour in Util.GetRelatives(_neighbourRadius, _neighbourRadius))
+            foreach (Tuple<int, int> neighbour in Util.GetRelatives(neighbourRadius, neighbourRadius))
             {
                 int neighbourX = _pathNode.gridX + neighbour.Item1;
                 int neighbourY = _pathNode.gridY + neighbour.Item2;
 
                 if (
                     neighbourX >= 0 &&
-                    neighbourX < _width &&
+                    neighbourX < width &&
                     neighbourY >= 0 &&
-                    neighbourY < _height
+                    neighbourY < height
                 )
                 {
-                    neighbours.Add(_grid[neighbourX, neighbourY]);
+                    neighbours.Add(grid[neighbourX, neighbourY]);
                 }
             }
 
@@ -76,34 +76,34 @@ namespace UNV.Pathfinding
 
         public NodeBase GetAt(Vector3 worldPoint)
         {
-            float percentX = (worldPoint.x + _gridWorldSize.x / 2) / _gridWorldSize.x;
-            float percentY = (worldPoint.z + _gridWorldSize.y / 2) / _gridWorldSize.y;
+            float percentX = (worldPoint.x + gridWorldSize.x / 2) / gridWorldSize.x;
+            float percentY = (worldPoint.z + gridWorldSize.y / 2) / gridWorldSize.y;
 
             percentX = Mathf.Clamp01(percentX);
             percentY = Mathf.Clamp01(percentY);
 
-            int x = Mathf.RoundToInt((_width - 1) * percentX);
-            int y = Mathf.RoundToInt((_height - 1) * percentY);
+            int x = Mathf.RoundToInt((width - 1) * percentX);
+            int y = Mathf.RoundToInt((height - 1) * percentY);
 
-            return _grid[x, y];
+            return grid[x, y];
         }
 
         public Vector2 GetDirection(NodeBase from, NodeBase to)
         {
-            SquareTilingNode _from = (SquareTilingNode)from;
-            SquareTilingNode _to = (SquareTilingNode)to;
+            GridNodeWithRotation _from = (GridNodeWithRotation)from;
+            GridNodeWithRotation _to = (GridNodeWithRotation)to;
             return new Vector2(_to.gridX - _from.gridX, _to.gridY - _from.gridY);
         }
 
         public void DilateObstacles(int radius)
         {
-            bool[,] obstacleGrid = new bool[_width, _height];
+            bool[,] obstacleGrid = new bool[width, height];
             Tuple<int, int>[] neighbours = Util.GetRelatives(radius, radius, true);
-            for (int x = 0; x < _width; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < _height; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    if (!_grid[x, y].walkable)
+                    if (!grid[x, y].walkable)
                     {
                         foreach (Tuple<int, int> neighbour in neighbours)
                         {
@@ -112,9 +112,9 @@ namespace UNV.Pathfinding
 
                             if (
                                 neighbourX >= 0 &&
-                                neighbourX < _width &&
+                                neighbourX < width &&
                                 neighbourY >= 0 &&
-                                neighbourY < _height
+                                neighbourY < height
                             )
                             {
                                 obstacleGrid[neighbourX, neighbourY] = true;
@@ -123,11 +123,11 @@ namespace UNV.Pathfinding
                     }
                 }
             }
-            for (int x = 0; x < _width; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < _height; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    _grid[x, y].walkable = !obstacleGrid[x, y];
+                    grid[x, y].walkable = !obstacleGrid[x, y];
                 }
             }
         }
@@ -139,31 +139,32 @@ namespace UNV.Pathfinding
 
         public void SetObstacleMask(LayerMask obstacleMask)
         {
-            _obstacleMask = obstacleMask;
+            this.obstacleMask = obstacleMask;
         }
 
-        public void SetGridWorldSize(Vector2 gridWorldSize)
+        public void SetTilingWorldSize(Vector2 gridWorldSize)
         {
-            _gridWorldSize = gridWorldSize;
+            this.gridWorldSize = gridWorldSize;
         }
 
         public void SetNodeSize(float nodeSize)
         {
-            _nodeSize = nodeSize;
+            this.nodeSize = nodeSize;
         }
 
         public void SetShow(bool show)
         {
-            _showGrid = show;
+            showGrid = show;
         }
 
         public IEnumerable<NodeBase> GetNodes()
         {
-            foreach (NodeBase node in _grid)
+            foreach (NodeBase node in grid)
             {
                 yield return node;
             }
         }
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/SquareTilingGrid.cs
 
         public void Clear()
         {
@@ -174,6 +175,10 @@ namespace UNV.Pathfinding
                 node.costToTarget = 0;
             }
         }
+=======
+<<<<<<<< Updated upstream:Assets/Scripts/Pathfinding/SquareTilingGrid.cs
+========
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/SquareTilingGrid.cs
 
         public bool IsClearPath(Vector3 from, Vector3 to)
         {
@@ -183,7 +188,11 @@ namespace UNV.Pathfinding
             float originX = from.x;
             float originY = from.z;
 
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/SquareTilingGrid.cs
             float delta = _nodeSize / 2;
+=======
+            float delta = nodeSize / 2;
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/SquareTilingGrid.cs
 
             if (horizontalDistance == 0)
             {
@@ -216,6 +225,10 @@ namespace UNV.Pathfinding
 
             return true;
         }
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/SquareTilingGrid.cs
+=======
+>>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/GridWithRotation.cs
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/SquareTilingGrid.cs
     }
 }
 

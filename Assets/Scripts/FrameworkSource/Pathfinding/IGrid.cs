@@ -5,18 +5,18 @@ using UnityEngine;
 
 namespace UNV.Pathfinding
 {
-    public interface IGrid
+    public interface ITiling
     {
         public int Width { get; }
         public int Height { get; }
         public float NodeSize { get; }
         public int NodeCount { get; }
 
-        public void GenerateGrid(Vector3 origin);
+        public void GenerateTiling(Vector3 origin);
 
         public void SetObstacleMask(LayerMask obstacleMask);
 
-        public void SetGridWorldSize(Vector2 gridWorldSize);
+        public void SetTilingWorldSize(Vector2 tilingWorldSize);
 
         public void SetNodeSize(float nodeSize);
 
@@ -32,10 +32,18 @@ namespace UNV.Pathfinding
 
         public void SetShow(bool show);
 
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/IGrid.cs
         public void Clear();
 
         public bool IsClearPath(Vector3 from, Vector3 to);
 
+=======
+<<<<<<<< Updated upstream:Assets/Scripts/Pathfinding/IGrid.cs
+========
+        public bool IsClearPath(Vector3 from, Vector3 to);
+
+>>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/ITiling.cs
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/IGrid.cs
         public IEnumerable<NodeBase> GetNodes();
     }
 }

@@ -10,8 +10,6 @@ namespace UNV.Pathfinding
         public bool walkable;
         public Vector3 worldPosition;
 
-        public float angleRange;
-
         public int costFromStart;
         public int costToTarget;
         public int TotalCost => costFromStart + costToTarget;

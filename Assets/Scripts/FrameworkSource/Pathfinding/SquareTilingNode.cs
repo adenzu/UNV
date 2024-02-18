@@ -5,12 +5,14 @@ using UnityEngine;
 
 namespace UNV.Pathfinding
 {
-    public class SquareTilingNode : NodeBase
+    public class GridNodeWithRotation : NodeBase
     {
         public int gridX;
         public int gridY;
 
-        public SquareTilingNode(bool walkable, Vector3 worldPosition, int gridX, int gridY)
+        public float angleRange;
+
+        public GridNodeWithRotation(bool walkable, Vector3 worldPosition, int gridX, int gridY)
             : base(walkable, worldPosition)
         {
             this.gridX = gridX;

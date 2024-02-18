@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 
@@ -9,15 +10,74 @@ namespace UNV.Pathfinding
 {
     public class Pathfinding : MonoBehaviour
     {
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/Pathfinding.cs
         [SerializeField] private PathRequestManager pathRequestManager;
         [SerializeField] private GridManager gridManager;
 
 
         public float angleChangeOverDistance;
+=======
+<<<<<<< Updated upstream:Assets/Scripts/Pathfinding/Pathfinding.cs
+        public static Pathfinding Instance { get; private set; }
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/Pathfinding.cs
 
         public delegate Vector2 GetDefaultDirectionDelegate();
         public GetDefaultDirectionDelegate GetDefaultDirection;
 
+<<<<<<< Updated upstream:Assets/Scripts/FrameworkSource/Pathfinding/Pathfinding.cs
+=======
+        public static GetDefaultDirectionDelegate GetDefaultDirection;
+        // public static AngleCostFunctionDelegate AngleCostFunction;
+        public static float angleChangeOverDistance;
+=======
+        [SerializeField] private PathRequestManager pathRequestManager;
+        [SerializeField] private TilingManager tilingManager;
+
+        [SerializeField] private MonoScript pathfindingAlgorithmScript;
+
+        public bool InitializedPathfindingAlgorithm { get; private set; } = false;
+
+        private IPathfindingAlgorithm pathfindingAlgorithm;
+
+        private void OnValidate()
+        {
+            if (!Util.HandleMonoScriptFieldClassInheritance(pathfindingAlgorithmScript, typeof(IPathfindingAlgorithm), "Pathfinding Algorithm"))
+            {
+                pathfindingAlgorithmScript = null;
+            }
+        }
+
+        private void Awake()
+        {
+            if (pathfindingAlgorithmScript != null)
+            {
+                pathfindingAlgorithm = Util.InstantiateMonoScriptObject<IPathfindingAlgorithm>(pathfindingAlgorithmScript);
+                SetupPathfindingAlgorithm();
+            }
+        }
+
+        private void SetupPathfindingAlgorithm()
+        {
+            if (tilingManager == null)
+            {
+                Debug.LogError("Tiling Manager is not set in Pathfinding");
+                return;
+            }
+            if (tilingManager.Tiling == null)
+            {
+                Invoke(nameof(SetupPathfindingAlgorithm), 0.1f);
+                return;
+            }
+            pathfindingAlgorithm.SetTiling(tilingManager.Tiling);
+            InitializedPathfindingAlgorithm = true;
+        }
+
+        public void SetParameters(params object[] parameters)
+        {
+            pathfindingAlgorithm.SetParameters(parameters);
+        }
+>>>>>>> Stashed changes:Assets/Scripts/FrameworkSource/Pathfinding/Pathfinding.cs
+>>>>>>> Stashed changes:Assets/Scripts/Pathfinding/Pathfinding.cs
 
         public void StartFindingPath(Vector3 startPosition, Vector3 targetPosition)
         {
@@ -26,6 +86,7 @@ namespace UNV.Pathfinding
 
         private IEnumerator FindPath(Vector3 startPosition, Vector3 targetPosition)
         {
+<<<<<<< Updated upstream:Assets/Scripts/Pathfinding/Pathfinding.cs
             Vector3[] waypoints = new Vector3[0];
             bool pathSuccess = false;
 
@@ -108,15 +169,16 @@ namespace UNV.Pathfinding
                     }
                 }
             }
+=======
+            Vector3[] waypoints = pathfindingAlgorithm.FindPath(startPosition, targetPosition);
+            bool pathSuccess = waypoints != null && waypoints.Length > 0;
+>>>>>>> Stashed changes:Assets/Scripts/FrameworkSource/Pathfinding/Pathfinding.cs
 
             yield return null;
-            if (pathSuccess)
-            {
-                waypoints = RetracePath(startNode, targetNode);
-            }
 
             pathRequestManager.OnPathProcessFinish(waypoints, pathSuccess);
         }
+<<<<<<< Updated upstream:Assets/Scripts/Pathfinding/Pathfinding.cs
 
         private Vector3[] RetracePath(NodeBase startNode, NodeBase endNode, bool simplify = true)
         {
@@ -230,5 +292,7 @@ namespace UNV.Pathfinding
                 _list.Clear();
             }
         }
+=======
+>>>>>>> Stashed changes:Assets/Scripts/FrameworkSource/Pathfinding/Pathfinding.cs
     }
 }
