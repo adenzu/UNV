@@ -1,5 +1,9 @@
 # Unmanned Naval Vehicle: Autonomous Boat Control Simulation
 
+## Project Trailer
+
+https://github.com/user-attachments/assets/efa48e2c-9f8f-4d52-8ed1-4872b6a780c7
+
 ## Project Description
 
 The Unmanned Naval Vehicle project addresses the challenge of autonomous maneuver control for boats, focusing on optimizing criteria such as travel time, fuel consumption, and safety. The simulation environment provides a realistic setting for testing various algorithms and technologies, offering a solution to the complexities of autonomous boat navigation.
