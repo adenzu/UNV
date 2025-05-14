@@ -29,6 +29,8 @@ To run the simulation, follow these steps:
 
 The current version of the simulation is not designed for external use. It serves as a research and development tool for autonomous boat control as of **now**.
 
+To run the demo day version of the project, follow the steps written here: https://github.com/adenzu/UNV/issues/2#issuecomment-2877728020
+
 ## Dependencies
 
 All necessary assets are included in the repository, eliminating the need for external dependencies.
