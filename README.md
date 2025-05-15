@@ -25,11 +25,11 @@ To run the simulation, follow these steps:
 2. Clone this repository.
 3. Open the project with Unity.
 
+To run the demo day version of the project, follow the steps written here: https://github.com/adenzu/UNV/issues/2#issuecomment-2877728020
+
 ## Usage
 
 The current version of the simulation is not designed for external use. It serves as a research and development tool for autonomous boat control as of **now**.
-
-To run the demo day version of the project, follow the steps written here: https://github.com/adenzu/UNV/issues/2#issuecomment-2877728020
 
 ## Dependencies
 
